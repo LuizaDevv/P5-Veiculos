@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { 
   getFirestore, collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc 
 } from 'firebase/firestore';
 import { 
-  Car, Bike, Search, Plus, Filter, X, Trash2,
+  Car, Bike, Search, Plus, Filter, X, Trash2, Menu,
   DollarSign, CheckCircle, LayoutDashboard, 
   Users, Wallet, AlertCircle, UploadCloud, TrendingUp, Activity, PieChart,
   FileText, ArrowDownToLine, Clock, AlertTriangle, Archive, FolderArchive,
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
-// Substitua estes valores pelos do seu projeto Firebase quando o criar!
+// Substitua as chaves abaixo pelas do seu projeto Firebase Real!
 const firebaseConfig = {
   apiKey: "SUA_API_KEY_AQUI_OU_FAKE_PARA_TESTE",
   authDomain: "seu-projeto.firebaseapp.com",
@@ -25,16 +25,15 @@ const firebaseConfig = {
 
 let app, auth, db;
 try {
-  // Tenta iniciar com a config do Canvas, se falhar usa a config local acima
   const configToUse = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
   app = initializeApp(configToUse);
   auth = getAuth(app);
   db = getFirestore(app);
 } catch (error) {
-  console.warn("Erro ao iniciar Firebase. O App vai abrir, mas não vai salvar dados:", error);
+  console.warn("Erro ao iniciar Firebase:", error);
 }
 
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'auto-gestor-local';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'auto-gestor-production';
 
 // --- UTILS FORMATTERS ---
 const formatCPF = (value) => {
@@ -316,6 +315,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [confirmAction, setConfirmAction] = useState({ isOpen: false, message: '', onConfirm: null });
   const [alertMessage, setAlertMessage] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Modals State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -325,7 +325,7 @@ export default function App() {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [selectedSaleId, setSelectedSaleId] = useState(null);
 
-  // Auth & Data Fetching
+  // Auth & Data Fetching (Voltou ao Firebase!)
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -336,7 +336,7 @@ export default function App() {
         }
       } catch (error) { 
         console.error("Auth Error:", error);
-        setLoading(false); // Para sair da tela de carregamento caso Firebase dê erro
+        setLoading(false);
       }
     };
     initAuth();
@@ -429,6 +429,7 @@ export default function App() {
       isOpen: true,
       message: 'Tem certeza que deseja excluir esta comissão permanentemente?',
       onConfirm: async () => {
+        if (!user || !db) return;
         try { await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'commissions', id)); } 
         catch (error) { console.error("Error deleting commission:", error); }
       }
@@ -456,6 +457,7 @@ export default function App() {
       isOpen: true,
       message: 'Tem certeza que deseja excluir permanentemente este veículo do sistema?',
       onConfirm: async () => {
+        if (!user || !db) return;
         try {
           await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'vehicles', id));
           setIsViewModalOpen(false);
@@ -469,6 +471,7 @@ export default function App() {
       isOpen: true,
       message: 'Tem certeza que deseja excluir permanentemente esta venda/contrato e todo o seu histórico do sistema?',
       onConfirm: async () => {
+        if (!user || !db) return;
         try {
           await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'sales', id));
           setSelectedSaleId(null);
@@ -597,59 +600,80 @@ export default function App() {
       <ConfirmModal isOpen={confirmAction.isOpen} message={confirmAction.message} onConfirm={confirmAction.onConfirm} onClose={() => setConfirmAction({...confirmAction, isOpen: false})} />
       <AlertModal message={alertMessage} onClose={() => setAlertMessage('')} />
 
+      {/* OVERLAY DO MENU MOBILE */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity" onClick={() => setIsMobileMenuOpen(false)}></div>
+      )}
+
       {/* SIDEBAR */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl hidden md:flex shrink-0">
-        <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-lg text-white"><Car size={24} /></div>
-          <h1 className="text-xl font-bold text-white tracking-wide">AutoGestor</h1>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} shrink-0`}>
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-600 p-2 rounded-lg text-white"><Car size={24} /></div>
+            <h1 className="text-xl font-bold text-white tracking-wide">AutoGestor</h1>
+          </div>
+          <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-400 hover:text-white p-1 rounded-lg">
+            <X size={24} />
+          </button>
         </div>
         <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto scrollbar-thin">
-          <SidebarItem icon={<PieChart size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => {setActiveTab('dashboard'); setSearchQuery(''); setActiveFilter({year:'', type:''})}} />
-          <SidebarItem icon={<Search size={20}/>} label="Consulta Central" active={activeTab === 'search-hub'} onClick={() => {setActiveTab('search-hub'); setSearchQuery(''); setActiveFilter({year:'', type:''})}} highlight />
+          <SidebarItem icon={<PieChart size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => {setActiveTab('dashboard'); setSearchQuery(''); setActiveFilter({year:'', type:''}); setIsMobileMenuOpen(false);}} />
+          <SidebarItem icon={<Search size={20}/>} label="Consulta Central" active={activeTab === 'search-hub'} onClick={() => {setActiveTab('search-hub'); setSearchQuery(''); setActiveFilter({year:'', type:''}); setIsMobileMenuOpen(false);}} highlight />
           
           <div className="pt-4 pb-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estoque & Negócios</div>
-          <SidebarItem icon={<LayoutDashboard size={20}/>} label="À Venda (Estoque)" active={activeTab === 'kanban'} onClick={() => {setActiveTab('kanban'); setSearchQuery(''); setActiveFilter({year:'', type:''})}} />
-          <SidebarItem icon={<CheckCircle size={20}/>} label="Veículos Vendidos" active={activeTab === 'sold'} onClick={() => {setActiveTab('sold'); setSearchQuery(''); setActiveFilter({year:'', type:''})}} />
+          <SidebarItem icon={<LayoutDashboard size={20}/>} label="À Venda (Estoque)" active={activeTab === 'kanban'} onClick={() => {setActiveTab('kanban'); setSearchQuery(''); setActiveFilter({year:'', type:''}); setIsMobileMenuOpen(false);}} />
+          <SidebarItem icon={<CheckCircle size={20}/>} label="Veículos Vendidos" active={activeTab === 'sold'} onClick={() => {setActiveTab('sold'); setSearchQuery(''); setActiveFilter({year:'', type:''}); setIsMobileMenuOpen(false);}} />
           
           <div className="pt-4 pb-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gestão</div>
-          <SidebarItem icon={<Users size={20}/>} label="Clientes" active={activeTab === 'clients'} onClick={() => {setActiveTab('clients'); setSearchQuery(''); setActiveFilter({year:'', type:''})}} />
-          <SidebarItem icon={<Wallet size={20}/>} label="Controle Financeiro" active={activeTab === 'finance'} onClick={() => setActiveTab('finance')} />
-          <SidebarItem icon={<DollarSign size={20}/>} label="Comissões" active={activeTab === 'commissions'} onClick={() => setActiveTab('commissions')} />
+          <SidebarItem icon={<Users size={20}/>} label="Clientes" active={activeTab === 'clients'} onClick={() => {setActiveTab('clients'); setSearchQuery(''); setActiveFilter({year:'', type:''}); setIsMobileMenuOpen(false);}} />
+          <SidebarItem icon={<Wallet size={20}/>} label="Controle Financeiro" active={activeTab === 'finance'} onClick={() => {setActiveTab('finance'); setIsMobileMenuOpen(false);}} />
+          <SidebarItem icon={<DollarSign size={20}/>} label="Comissões" active={activeTab === 'commissions'} onClick={() => {setActiveTab('commissions'); setIsMobileMenuOpen(false);}} />
           
           <div className="pt-4 pb-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Histórico</div>
-          <SidebarItem icon={<FolderArchive size={20}/>} label="Arquivo Morto" active={activeTab === 'archive'} onClick={() => {setActiveTab('archive'); setSearchQuery(''); setActiveFilter({year:'', type:''})}} />
+          <SidebarItem icon={<FolderArchive size={20}/>} label="Arquivo Morto" active={activeTab === 'archive'} onClick={() => {setActiveTab('archive'); setSearchQuery(''); setActiveFilter({year:'', type:''}); setIsMobileMenuOpen(false);}} />
         </nav>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden w-full relative">
         {/* HEADER */}
-        <header className="bg-white border-b px-8 py-5 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 z-10 shrink-0">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">
-              {activeTab === 'dashboard' && 'Visão Geral'}
-              {activeTab === 'search-hub' && 'Consulta Central'}
-              {activeTab === 'kanban' && 'Estoque de Veículos'}
-              {activeTab === 'sold' && 'Veículos Vendidos'}
-              {activeTab === 'clients' && 'Meus Clientes'}
-              {activeTab === 'finance' && 'Controle Financeiro'}
-              {activeTab === 'commissions' && 'Comissões de Vendas'}
-              {activeTab === 'archive' && 'Arquivo Morto (Quitados)'}
-            </h2>
-            <p className="text-sm text-slate-500">
-              {activeTab === 'dashboard' && 'Acompanhe os principais indicadores da sua loja.'}
-              {activeTab === 'search-hub' && 'Encontre rapidamente qualquer cliente, veículo ou contrato na loja.'}
-              {activeTab === 'kanban' && 'Gerencie seus carros e motos disponíveis.'}
-              {activeTab === 'sold' && 'Acompanhamento de pagamentos e histórico.'}
-              {activeTab === 'clients' && 'Lista de clientes e histórico completo de documentos.'}
-              {activeTab === 'finance' && 'Acompanhe os valores de entrada e financiamentos.'}
-              {activeTab === 'commissions' && 'Gerencie as comissões geradas pelas vendas.'}
-              {activeTab === 'archive' && 'Histórico de todos os contratos já finalizados e pagos.'}
-            </p>
+        <header className="bg-white border-b px-5 md:px-8 py-4 md:py-5 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 z-10 shrink-0">
+          
+          <div className="flex justify-between items-start w-full">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800">
+                {activeTab === 'dashboard' && 'Visão Geral'}
+                {activeTab === 'search-hub' && 'Consulta Central'}
+                {activeTab === 'kanban' && 'Estoque de Veículos'}
+                {activeTab === 'sold' && 'Veículos Vendidos'}
+                {activeTab === 'clients' && 'Meus Clientes'}
+                {activeTab === 'finance' && 'Controle Financeiro'}
+                {activeTab === 'commissions' && 'Comissões de Vendas'}
+                {activeTab === 'archive' && 'Arquivo Morto (Quitados)'}
+              </h2>
+              <p className="text-xs md:text-sm text-slate-500 mt-1">
+                {activeTab === 'dashboard' && 'Acompanhe os principais indicadores da sua loja.'}
+                {activeTab === 'search-hub' && 'Encontre rapidamente qualquer cliente, veículo ou contrato na loja.'}
+                {activeTab === 'kanban' && 'Gerencie seus carros e motos disponíveis.'}
+                {activeTab === 'sold' && 'Acompanhamento de pagamentos e histórico.'}
+                {activeTab === 'clients' && 'Lista de clientes e histórico completo de documentos.'}
+                {activeTab === 'finance' && 'Acompanhe os valores de entrada e financiamentos.'}
+                {activeTab === 'commissions' && 'Gerencie as comissões geradas pelas vendas.'}
+                {activeTab === 'archive' && 'Histórico de todos os contratos já finalizados e pagos.'}
+              </p>
+            </div>
+            
+            {/* BOTÃO HAMBÚRGUER MOBILE */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)} 
+              className="md:hidden p-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors shrink-0 ml-4"
+            >
+              <Menu size={24} />
+            </button>
           </div>
           
           {['kanban', 'sold', 'clients', 'archive', 'commissions', 'search-hub'].includes(activeTab) && (
-            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto mt-2 md:mt-0">
               
               {['kanban', 'sold', 'clients', 'archive', 'search-hub'].includes(activeTab) && (
                 <div className="relative flex-1 xl:w-64 min-w-[200px]">
@@ -691,13 +715,13 @@ export default function App() {
               )}
 
               {activeTab === 'kanban' && (
-                <button onClick={() => { setSelectedVehicle(null); setIsAddModalOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-colors shrink-0 h-[38px]">
-                  <Plus size={18} /> <span className="hidden sm:inline">Novo Veículo</span>
+                <button onClick={() => { setSelectedVehicle(null); setIsAddModalOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-colors shrink-0 h-[38px] w-full md:w-auto justify-center">
+                  <Plus size={18} /> <span>Novo Veículo</span>
                 </button>
               )}
               {activeTab === 'commissions' && (
-                <button onClick={() => setIsManualCommissionOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-colors shrink-0 h-[38px]">
-                  <DollarSign size={18} /> <span className="hidden sm:inline">Adicionar Comissão</span>
+                <button onClick={() => setIsManualCommissionOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-colors shrink-0 h-[38px] w-full md:w-auto justify-center">
+                  <DollarSign size={18} /> <span>Adicionar Comissão</span>
                 </button>
               )}
             </div>
@@ -722,8 +746,8 @@ export default function App() {
         )}
 
         {activeTab === 'kanban' && (
-          <div className="flex-1 overflow-auto p-8">
-            <div className="flex flex-col md:flex-row gap-6 h-full items-start">
+          <div className="flex-1 overflow-auto p-5 md:p-8">
+            <div className="flex flex-col md:flex-row gap-6 h-full items-start pb-10">
               <KanbanColumn title="Carros" icon={<Car size={20} className="text-blue-500"/>} count={filteredStock.filter(v=>v.type==='carro').length} onDrop={(e) => handleDrop(e, 'carro')} onDragOver={handleDragOver}>
                 {filteredStock.filter(v=>v.type==='carro').map(v => <VehicleCard key={v.id} vehicle={v} onDragStart={handleDragStart} onClick={() => { setSelectedVehicle(v); setIsViewModalOpen(true); }} onDelete={handleDeleteVehicle} />)}
                 {filteredStock.filter(v=>v.type==='carro').length === 0 && <EmptyState message="Nenhum carro encontrado." />}
@@ -801,7 +825,7 @@ export default function App() {
 const SidebarItem = ({ icon, label, active, disabled, onClick, highlight }) => (
   <button 
     onClick={disabled ? undefined : onClick}
-    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium
+    className={`w-full flex items-center gap-3 px-3 py-3 md:py-2.5 rounded-lg transition-colors text-sm font-medium
       ${active ? (highlight ? 'bg-indigo-600 text-white shadow-md' : 'bg-blue-600/10 text-blue-400') : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
       ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
     `}
@@ -813,18 +837,18 @@ const SidebarItem = ({ icon, label, active, disabled, onClick, highlight }) => (
 
 const KanbanColumn = ({ title, icon, count, children, onDrop, onDragOver, bgClass = "bg-slate-100", borderClass = "border-slate-200/60" }) => (
   <div 
-    className={`flex-1 w-full md:w-1/3 ${bgClass} rounded-2xl p-4 flex flex-col max-h-full border ${borderClass} shadow-sm`}
+    className={`w-full md:flex-1 md:w-1/3 ${bgClass} rounded-2xl p-4 flex flex-col max-h-full border ${borderClass} shadow-sm shrink-0`}
     onDrop={onDrop}
     onDragOver={onDragOver}
   >
-    <div className="flex items-center justify-between mb-4 px-2">
+    <div className="flex items-center justify-between mb-4 px-2 shrink-0">
       <div className="flex items-center gap-2">
         {icon}
         <h3 className="font-bold text-slate-700">{title}</h3>
       </div>
       <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">{count}</span>
     </div>
-    <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin pb-4">
+    <div className="overflow-y-auto space-y-3 pr-2 scrollbar-thin pb-4 flex-1">
       {children}
     </div>
   </div>
@@ -1399,8 +1423,8 @@ const SoldKanbanView = ({ sales, vehicles, onDragStart, onDrop, onDragOver, onSa
   const quitados = sales.filter(s => s.paymentStatus === 'quitado');
 
   return (
-    <div className="flex-1 overflow-auto p-8 bg-slate-50">
-      <div className="flex flex-col md:flex-row gap-6 h-full items-start">
+    <div className="flex-1 overflow-auto p-5 md:p-8 bg-slate-50">
+      <div className="flex flex-col md:flex-row gap-6 h-full items-start pb-10">
         <KanbanColumn title="Em Dia" icon={<Clock size={20} className="text-blue-500"/>} count={emDia.length} onDrop={(e) => onDrop(e, 'em-dia')} onDragOver={onDragOver} bgClass="bg-white" borderClass="border-blue-100">
           {emDia.map(s => <SaleCard key={s.id} sale={s} vehicle={vehicles.find(v=>v.id === s.vehicleId)} onDragStart={onDragStart} onClick={() => onSaleClick(s)} onDelete={onDeleteSale} />)}
           {emDia.length === 0 && <EmptyState message="Nenhuma venda pendente em dia." />}
@@ -1411,15 +1435,15 @@ const SoldKanbanView = ({ sales, vehicles, onDragStart, onDrop, onDragOver, onSa
           {inadimplentes.length === 0 && <EmptyState message="Nenhum cliente inadimplente." />}
         </KanbanColumn>
         
-        <KanbanColumn title="Quitados (Arrastar para Arquivar)" icon={<FolderArchive size={20} className="text-slate-500"/>} count={quitados.length} onDrop={(e) => onDrop(e, 'quitado')} onDragOver={onDragOver} bgClass="bg-slate-200/50" borderClass="border-slate-300 border-dashed">
+        <KanbanColumn title="Quitados" icon={<FolderArchive size={20} className="text-slate-500"/>} count={quitados.length} onDrop={(e) => onDrop(e, 'quitado')} onDragOver={onDragOver} bgClass="bg-slate-200/50" borderClass="border-slate-300 border-dashed">
           {quitados.slice(0, 4).map(s => <SaleCard key={s.id} sale={s} vehicle={vehicles.find(v=>v.id === s.vehicleId)} onDragStart={onDragStart} onClick={() => onSaleClick(s)} opacity="opacity-70 hover:opacity-100 bg-slate-100/80" onDelete={onDeleteSale} />)}
           
           {quitados.length > 0 && (
-            <div className="w-full mt-2 py-3 bg-slate-300 text-slate-600 font-bold text-sm rounded-xl flex items-center justify-center gap-2">
-              <FolderArchive size={18}/> Existem {quitados.length} registos no Arquivo Morto
-            </div>
+            <button onClick={onGoToArchive} className="w-full mt-2 py-3 bg-slate-300 hover:bg-slate-400 text-slate-700 hover:text-white font-bold text-sm rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+              Ver {quitados.length} no Arquivo Morto
+            </button>
           )}
-          {quitados.length === 0 && <EmptyState message="Arraste um contrato para esta coluna ao finalizar o pagamento." />}
+          {quitados.length === 0 && <EmptyState message="Arraste para cá ao finalizar o pagamento." />}
         </KanbanColumn>
       </div>
     </div>
@@ -1579,7 +1603,7 @@ const DashboardView = ({ vehicles, sales, clients }) => {
   const inadimplentes = sales.filter(s => s.paymentStatus === 'inadimplente');
 
   return (
-    <div className="flex-1 overflow-auto p-8 bg-slate-50 space-y-6">
+    <div className="flex-1 overflow-auto p-4 md:p-8 bg-slate-50 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-red-200 flex flex-col relative overflow-hidden">
           <div className="absolute top-0 right-0 p-3"><AlertTriangle size={32} className="text-red-100" /></div>
@@ -1646,7 +1670,7 @@ const ClientsView = ({ sales, searchQuery, onShowAlert }) => {
     .filter(c => (c.clientName||'').toLowerCase().includes(searchLower) || (c.clientCpf||'').includes(searchLower));
 
   return (
-    <div className="flex-1 overflow-auto p-8 bg-slate-50">
+    <div className="flex-1 overflow-auto p-4 md:p-8 bg-slate-50">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {uniqueClients.map(client => (
           <div key={client.clientCpf} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
@@ -1704,7 +1728,7 @@ const ClientsView = ({ sales, searchQuery, onShowAlert }) => {
 };
 
 const FinanceView = ({ sales }) => (
-  <div className="flex-1 overflow-auto p-8 bg-slate-50">
+  <div className="flex-1 overflow-auto p-4 md:p-8 bg-slate-50">
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[1000px]">
@@ -1752,7 +1776,7 @@ const CommissionsView = ({ commissions, onToggleStatus, onDelete }) => {
   const valTotal = valPending + valPaid;
 
   return (
-    <div className="flex-1 overflow-auto p-8 bg-slate-50 space-y-8">
+    <div className="flex-1 overflow-auto p-4 md:p-8 bg-slate-50 space-y-6 md:space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-yellow-600 text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
           <div className="absolute top-4 right-4 bg-yellow-500/50 p-2 rounded-lg"><TrendingUp size={24} /></div>
@@ -1775,7 +1799,7 @@ const CommissionsView = ({ commissions, onToggleStatus, onDelete }) => {
       </div>
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left min-w-[800px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
                 <th className="p-4 font-semibold w-32">Data</th>
@@ -1815,7 +1839,7 @@ const ArchiveView = ({ sales, vehicles, onSaleClick, onDeleteSale }) => {
   const quitados = sales.filter(s => s.paymentStatus === 'quitado');
 
   return (
-    <div className="flex-1 overflow-auto p-8 bg-slate-50">
+    <div className="flex-1 overflow-auto p-4 md:p-8 bg-slate-50">
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <div>
