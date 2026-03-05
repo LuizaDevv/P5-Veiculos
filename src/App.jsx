@@ -25,14 +25,17 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
 let app, auth, db;
+
 try {
-  const configToUse = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
+  const configToUse = typeof __firebase_config !== 'undefined'
+    ? JSON.parse(__firebase_config)
+    : firebaseConfig;
+
   app = initializeApp(configToUse);
   auth = getAuth(app);
   db = getFirestore(app);
+
 } catch (error) {
   console.warn("Erro ao iniciar Firebase:", error);
 }
