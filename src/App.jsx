@@ -13,12 +13,9 @@ import {
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
-// Substitua as chaves abaixo pelas do seu projeto Firebase Real!
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
+// As chaves do seu projeto Firebase Real (autogestor-c535c) já estão inseridas aqui!
+>>>>>>> 46e400d (Adiciona configurações corretas do Firebase)
 const firebaseConfig = {
   apiKey: "AIzaSyAiJMqpzZvuNM_QsypHHHMLU84as8Gj6M8",
   authDomain: "autogestor-c535c.firebaseapp.com",
@@ -414,6 +411,14 @@ export default function App() {
   }, [sales, user]);
 
   // --- ACTIONS ---
+  const checkConnection = () => {
+    if (!user || !db) {
+      setAlertMessage("⚠️ Conexão Pendente com o Firebase!\n\nVocê está a usar a versão do código que exige banco de dados na nuvem, mas ainda não configurou as suas chaves reais.\n\nAs ações de salvar, editar e excluir estão bloqueadas até atualizar o ficheiro App.jsx.");
+      return false;
+    }
+    return true;
+  };
+
   const handlePrint = (htmlContent) => {
     const printWindow = window.open('', '_blank');
     if(printWindow) {
@@ -425,7 +430,7 @@ export default function App() {
   };
 
   const handleToggleCommission = async (id, currentStatus) => {
-    if (!user || !db) return;
+    if (!checkConnection()) return;
     try {
       const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'commissions', id);
       await updateDoc(docRef, { status: currentStatus === 'pendente' ? 'paga' : 'pendente' });
@@ -433,6 +438,7 @@ export default function App() {
   };
 
   const handleDeleteCommission = (id) => {
+    if (!checkConnection()) return;
     setConfirmAction({
       isOpen: true,
       message: 'Tem certeza que deseja excluir esta comissão permanentemente?',
@@ -445,7 +451,7 @@ export default function App() {
   };
 
   const handleSaveVehicle = async (vehicleData) => {
-    if (!user || !db) return;
+    if (!checkConnection()) return;
     const vehiclesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'vehicles');
     try {
       if (vehicleData.id) {
@@ -461,6 +467,7 @@ export default function App() {
   };
 
   const handleDeleteVehicle = (id) => {
+    if (!checkConnection()) return;
     setConfirmAction({
       isOpen: true,
       message: 'Tem certeza que deseja excluir permanentemente este veículo do sistema?',
@@ -475,6 +482,7 @@ export default function App() {
   };
 
   const handleDeleteSale = (id) => {
+    if (!checkConnection()) return;
     setConfirmAction({
       isOpen: true,
       message: 'Tem certeza que deseja excluir permanentemente esta venda/contrato e todo o seu histórico do sistema?',
@@ -489,7 +497,7 @@ export default function App() {
   };
 
   const handleSellVehicle = async (saleData) => {
-    if (!user || !db || !selectedVehicle) return;
+    if (!checkConnection() || !selectedVehicle) return;
     try {
       const vehicleRef = doc(db, 'artifacts', appId, 'users', user.uid, 'vehicles', selectedVehicle.id);
       await updateDoc(vehicleRef, { status: 'vendido' });
@@ -529,7 +537,7 @@ export default function App() {
   };
 
   const handleAddManualCommission = async (data) => {
-    if (!user || !db) return;
+    if (!checkConnection()) return;
     try {
       const commissionsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'commissions');
       await addDoc(commissionsRef, {
@@ -550,7 +558,7 @@ export default function App() {
   const handleSaleDrop = async (e, targetStatus) => {
     e.preventDefault();
     const saleId = e.dataTransfer.getData('saleId');
-    if (!saleId || !user || !db) return;
+    if (!saleId || !checkConnection()) return;
     const sale = sales.find(s => s.id === saleId);
     if (sale && sale.paymentStatus !== targetStatus) {
       const saleRef = doc(db, 'artifacts', appId, 'users', user.uid, 'sales', saleId);
@@ -562,7 +570,7 @@ export default function App() {
   const handleDrop = async (e, targetType) => {
     e.preventDefault();
     const vehicleId = e.dataTransfer.getData('vehicleId');
-    if (!vehicleId || !user || !db) return;
+    if (!vehicleId || !checkConnection()) return;
     const vehicle = vehicles.find(v => v.id === vehicleId);
     if (vehicle && vehicle.type !== targetType) {
       const vehicleRef = doc(db, 'artifacts', appId, 'users', user.uid, 'vehicles', vehicleId);
@@ -572,7 +580,7 @@ export default function App() {
   const handleDragOver = (e) => e.preventDefault();
 
   const handleUpdateInstallment = async (saleId, installmentId, updates) => {
-    if(!user || !db) return;
+    if(!checkConnection()) return;
     const sale = sales.find(s => s.id === saleId);
     if(!sale) return;
     const updatedInstallments = sale.installmentsList.map(inst => 
