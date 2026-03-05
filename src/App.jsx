@@ -14,14 +14,23 @@ import {
 
 // --- FIREBASE SETUP ---
 // Substitua as chaves abaixo pelas do seu projeto Firebase Real!
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY_AQUI_OU_FAKE_PARA_TESTE",
-  authDomain: "seu-projeto.firebaseapp.com",
-  projectId: "seu-projeto",
-  storageBucket: "seu-projeto.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
+  apiKey: "AIzaSyAiJMqpzZvuNM_QsypHHHMLU84as8Gj6M8",
+  authDomain: "autogestor-c535c.firebaseapp.com",
+  projectId: "autogestor-c535c",
+  storageBucket: "autogestor-c535c.firebasestorage.app",
+  messagingSenderId: "221428036914",
+  appId: "1:221428036914:web:50ddca078f257f0693132b"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 let app, auth, db;
 try {
