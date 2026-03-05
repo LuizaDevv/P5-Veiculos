@@ -1,0 +1,19 @@
+{
+  "short_name": "AutoGestor",
+  "name": "AutoGestor - Sistema de Veículos",
+  "description": "Gestão completa de veículos e clientes.",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3204/3204731.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#f8fafc",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#1e293b",
+  "orientation": "portrait"
+}
