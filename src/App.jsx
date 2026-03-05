@@ -15,7 +15,6 @@ import {
 // --- FIREBASE SETUP ---
 
 // As chaves do seu projeto Firebase Real (autogestor-c535c) já estão inseridas aqui!
->>>>>>> 46e400d (Adiciona configurações corretas do Firebase)
 const firebaseConfig = {
   apiKey: "AIzaSyAiJMqpzZvuNM_QsypHHHMLU84as8Gj6M8",
   authDomain: "autogestor-c535c.firebaseapp.com",
