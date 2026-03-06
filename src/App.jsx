@@ -1650,29 +1650,38 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onViewVe
                   <span className="text-xs text-slate-500 pl-5">{s.clientPhone}</span>
                 </div>
 
-                <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-3 gap-2">
-                  <button onClick={() => onPrint(getContractHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><FileText size={14}/> Contrato</button>
-                  <button onClick={() => onPrint(getSpreadsheetHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><ArrowDownToLine size={14}/> Planilha</button>
-                  <button onClick={() => onPrint(getReportHTML(s, v))} className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><Activity size={14}/> Relatório</button>
-                </div>
+               <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-3 gap-2">
+  <button onClick={() => onPrint(getContractHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><FileText size={14}/> Contrato</button>
+  <button onClick={() => onPrint(getSpreadsheetHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><ArrowDownToLine size={14}/> Planilha</button>
+  <button onClick={() => onPrint(getReportHTML(s, v))} className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><Activity size={14}/> Relatório</button>
+</div>
 
-                {(s.clientDocuments?.length > 0 || v?.documents?.length > 0) && (
-                  <div className="mt-4 pt-3 border-t border-slate-100">
-                    <span className="text-xs font-bold text-slate-500 mb-2 block">Documentos Anexados</span>
-                    <div className="flex flex-col gap-1">
-                      {v?.documents?.map((doc, i) => (
-                        <button key={'v'+i} onClick={() => onShowAlert('A iniciar o download do documento do veículo: ' + doc)} className="text-xs text-left text-blue-600 hover:underline flex items-center gap-1"><ArrowDownToLine size={12}/> {doc.name || doc}
-                      ))}
-                      {s?.clientDocuments?.map((doc, i) => (
-                        <button key={'c'+i} onClick={() => handleDownloadDocument(doc)} className="text-xs text-left text-indigo-600 hover:underline flex items-center gap-1"><ArrowDownToLine size={12}/> {doc.name || doc}
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          }
-        })}
+{(s.clientDocuments?.length > 0 || v?.documents?.length > 0) && (
+  <div className="mt-4 pt-3 border-t border-slate-100">
+    <span className="text-xs font-bold text-slate-500 mb-2 block">Documentos Anexados</span>
+    <div className="flex flex-col gap-1">
+      {v?.documents?.map((doc, i) => (
+        <button
+          key={'v' + i}
+          onClick={() => handleDownloadDocument(doc)}
+          className="text-xs text-left text-blue-600 hover:underline flex items-center gap-1"
+        >
+          <ArrowDownToLine size={12} /> {doc.name || doc}
+        </button>
+      ))}
+
+      {s?.clientDocuments?.map((doc, i) => (
+        <button
+          key={'c' + i}
+          onClick={() => handleDownloadDocument(doc)}
+          className="text-xs text-left text-indigo-600 hover:underline flex items-center gap-1"
+        >
+          <ArrowDownToLine size={12} /> {doc.name || doc}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
         {filteredItems.length === 0 && (
           <div className="col-span-full py-16 text-center text-slate-500 bg-white rounded-2xl border border-dashed border-slate-300">
             <Search size={48} className="mx-auto mb-4 opacity-20" />
