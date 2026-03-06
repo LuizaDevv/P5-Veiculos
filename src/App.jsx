@@ -1613,83 +1613,98 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onViewVe
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((data, idx) => {
-          const v = data.vehicle;
-          if (data.type === 'stock') {
-            return (
-              <div key={idx} className="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Estoque</div>
-                <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-1">{v.brand} {v.model}</div>
-                <div className="font-mono text-sm text-slate-500 mb-4">{v.plate} • {v.year}</div>
-                <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-4">
-                  <span className="font-bold text-blue-600">R$ {parseMoney(v.price).toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
-                  <div className="flex gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); onDeleteVehicle(v.id); }} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 size={16}/></button>
-                    <button onClick={() => onViewVehicle(v)} className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition-colors">Abrir Cadastro</button>
-                  </div>
-                </div>
-              </div>
-            );
-          } else {
-            const s = data.item;
-            const badgeColors = s.paymentStatus === 'quitado' ? 'bg-slate-200 text-slate-700' : s.paymentStatus === 'inadimplente' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white';
-            return (
-              <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col">
-                <div className={`absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider ${badgeColors}`}>
-                  {s.paymentStatus === 'quitado' ? 'Arquivo Morto' : s.paymentStatus === 'inadimplente' ? 'Inadimplente' : 'Vendido (Em Dia)'}
-                </div>
-                <button onClick={(e) => { e.stopPropagation(); onDeleteSale(s.id); }} className="absolute top-2 right-2 text-slate-200 hover:text-red-500 hover:bg-red-50 p-1.5 rounded z-10 transition-colors mt-6">
-                  <Trash2 size={16}/>
-                </button>
+  {filteredItems.map((data, idx) => {
+    const v = data.vehicle;
 
-                <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-1 pr-6">{v ? `${v.brand} ${v.model}` : 'Veículo Removido'}</div>
-                <div className="font-mono text-sm text-slate-400 mb-3">{v?.plate}</div>
-                
-                <div className="flex flex-col gap-1 text-sm text-slate-700 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <span className="font-bold flex items-center gap-1.5"><Users size={14} className="text-slate-400"/> {s.clientName}</span>
-                  <span className="text-xs text-slate-500 pl-5">{s.clientPhone}</span>
-                </div>
-
-               <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-3 gap-2">
-  <button onClick={() => onPrint(getContractHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><FileText size={14}/> Contrato</button>
-  <button onClick={() => onPrint(getSpreadsheetHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><ArrowDownToLine size={14}/> Planilha</button>
-  <button onClick={() => onPrint(getReportHTML(s, v))} className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><Activity size={14}/> Relatório</button>
-</div>
-
-{(s.clientDocuments?.length > 0 || v?.documents?.length > 0) && (
-  <div className="mt-4 pt-3 border-t border-slate-100">
-    <span className="text-xs font-bold text-slate-500 mb-2 block">Documentos Anexados</span>
-    <div className="flex flex-col gap-1">
-      {v?.documents?.map((doc, i) => (
-        <button
-          key={'v' + i}
-          onClick={() => handleDownloadDocument(doc)}
-          className="text-xs text-left text-blue-600 hover:underline flex items-center gap-1"
-        >
-          <ArrowDownToLine size={12} /> {doc.name || doc}
-        </button>
-      ))}
-
-      {s?.clientDocuments?.map((doc, i) => (
-        <button
-          key={'c' + i}
-          onClick={() => handleDownloadDocument(doc)}
-          className="text-xs text-left text-indigo-600 hover:underline flex items-center gap-1"
-        >
-          <ArrowDownToLine size={12} /> {doc.name || doc}
-        </button>
-      ))}
-    </div>
-  </div>
-)}
-        {filteredItems.length === 0 && (
-          <div className="col-span-full py-16 text-center text-slate-500 bg-white rounded-2xl border border-dashed border-slate-300">
-            <Search size={48} className="mx-auto mb-4 opacity-20" />
-            <p className="text-lg font-bold">Nenhum resultado encontrado na base de dados.</p>
-            <p className="text-sm mt-1">Tente pesquisar por outro nome, placa ou modelo.</p>
+    if (data.type === 'stock') {
+      return (
+        <div key={idx} className="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Estoque</div>
+          <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-1">{v.brand} {v.model}</div>
+          <div className="font-mono text-sm text-slate-500 mb-4">{v.plate} • {v.year}</div>
+          <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-4">
+            <span className="font-bold text-blue-600">R$ {parseMoney(v.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            <div className="flex gap-2">
+              <button onClick={(e) => { e.stopPropagation(); onDeleteVehicle(v.id); }} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 size={16} /></button>
+              <button onClick={() => onViewVehicle(v)} className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition-colors">Abrir Cadastro</button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      );
+    } else {
+      const s = data.item;
+      const badgeColors = s.paymentStatus === 'quitado'
+        ? 'bg-slate-200 text-slate-700'
+        : s.paymentStatus === 'inadimplente'
+        ? 'bg-red-500 text-white'
+        : 'bg-emerald-500 text-white';
+
+      return (
+        <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col">
+          <div className={`absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider ${badgeColors}`}>
+            {s.paymentStatus === 'quitado' ? 'Arquivo Morto' : s.paymentStatus === 'inadimplente' ? 'Inadimplente' : 'Vendido (Em Dia)'}
+          </div>
+
+          <button onClick={(e) => { e.stopPropagation(); onDeleteSale(s.id); }} className="absolute top-2 right-2 text-slate-200 hover:text-red-500 hover:bg-red-50 p-1.5 rounded z-10 transition-colors mt-6">
+            <Trash2 size={16} />
+          </button>
+
+          <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-1 pr-6">
+            {v ? `${v.brand} ${v.model}` : 'Veículo Removido'}
+          </div>
+
+          <div className="font-mono text-sm text-slate-400 mb-3">{v?.plate}</div>
+
+          <div className="flex flex-col gap-1 text-sm text-slate-700 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <span className="font-bold flex items-center gap-1.5"><Users size={14} className="text-slate-400" /> {s.clientName}</span>
+            <span className="text-xs text-slate-500 pl-5">{s.clientPhone}</span>
+          </div>
+
+          <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-3 gap-2">
+            <button onClick={() => onPrint(getContractHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><FileText size={14} /> Contrato</button>
+            <button onClick={() => onPrint(getSpreadsheetHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><ArrowDownToLine size={14} /> Planilha</button>
+            <button onClick={() => onPrint(getReportHTML(s, v))} className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><Activity size={14} /> Relatório</button>
+          </div>
+
+          {(s.clientDocuments?.length > 0 || v?.documents?.length > 0) && (
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <span className="text-xs font-bold text-slate-500 mb-2 block">Documentos Anexados</span>
+              <div className="flex flex-col gap-1">
+                {v?.documents?.map((doc, i) => (
+                  <button
+                    key={'v' + i}
+                    onClick={() => handleDownloadDocument(doc)}
+                    className="text-xs text-left text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    <ArrowDownToLine size={12} /> {doc.name || doc}
+                  </button>
+                ))}
+
+                {s?.clientDocuments?.map((doc, i) => (
+                  <button
+                    key={'c' + i}
+                    onClick={() => handleDownloadDocument(doc)}
+                    className="text-xs text-left text-indigo-600 hover:underline flex items-center gap-1"
+                  >
+                    <ArrowDownToLine size={12} /> {doc.name || doc}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+  })}
+
+    {filteredItems.length === 0 && (
+    <div className="col-span-full py-16 text-center text-slate-500 bg-white rounded-2xl border border-dashed border-slate-300">
+      <Search size={48} className="mx-auto mb-4 opacity-20" />
+      <p className="text-lg font-bold">Nenhum resultado encontrado na base de dados.</p>
+      <p className="text-sm mt-1">Tente pesquisar por outro nome, placa ou modelo.</p>
+    </div>
+  )}
+</div>
     </div>
   );
 };
