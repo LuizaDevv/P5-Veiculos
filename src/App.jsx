@@ -1053,8 +1053,12 @@ const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
           <div className="col-span-full mt-2">
             <label className="block text-sm font-semibold text-slate-700 mb-1">Documentos e Anexos</label>
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center text-slate-500 bg-slate-50 relative hover:bg-slate-100 transition-colors cursor-pointer">
-              <input type="file" multiple onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              <UploadCloud size={24} className="mb-1" />
+              <input
+  type="file"
+  multiple
+  onChange={handleFileUpload}
+  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+/>
               <span className="text-sm font-medium">Clique ou arraste ficheiros para anexar</span>
             </div>
             
