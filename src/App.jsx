@@ -1046,10 +1046,10 @@ const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
             
             {(formData.documents || []).length > 0 && (
               <div className="mt-3 space-y-2">
-                {formData.documents.map((docName, i) => (
+                {formData.documents.map((doc, i) => (
                   <div key={i} className="flex items-center justify-between bg-white border border-slate-200 p-2 rounded-lg text-sm">
                     <span className="flex items-center gap-2 text-slate-600 font-medium">
-                      <FileText size={16} className="text-blue-500"/> {docName}
+                      <FileText size={16} className="text-blue-500"/> {doc.name || doc}
                     </span>
                     <button type="button" onClick={() => removeDocument(i)} className="text-red-500 hover:bg-red-50 p-1 rounded transition-colors">
                       <X size={16}/>
