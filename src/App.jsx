@@ -974,28 +974,42 @@ const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
   };
 
   const handleFileUpload = async (e) => {
-  const selectedFiles = Array.from(e.target.files);
-  const storage = getStorage();
+  try {
+    const selectedFiles = Array.from(e.target.files || []);
 
-  const uploadedDocs = await Promise.all(
-    selectedFiles.map(async (file) => {
-      const safeName = `${Date.now()}-${file.name}`;
-      const storagePath = `vehicles/${safeName}`;
-      const fileRef = ref(storage, storagePath);
+    if (!selectedFiles.length) {
+      onShowAlert("Nenhum arquivo selecionado.");
+      return;
+    }
 
-      await uploadBytes(fileRef, file);
+    const storage = getStorage();
 
-      return {
-        name: file.name,
-        path: storagePath
-      };
-    })
-  );
+    const uploadedDocs = await Promise.all(
+      selectedFiles.map(async (file) => {
+        const safeName = `${Date.now()}-${file.name}`;
+        const storagePath = `vehicles/${safeName}`;
+        const fileRef = ref(storage, storagePath);
 
-  setFormData({
-    ...formData,
-    documents: [...(formData.documents || []), ...uploadedDocs]
-  });
+        await uploadBytes(fileRef, file);
+
+        return {
+          name: file.name,
+          path: storagePath,
+        };
+      })
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      documents: [...(prev.documents || []), ...uploadedDocs],
+    }));
+
+    onShowAlert("✅ Arquivo(s) anexado(s) com sucesso.");
+    e.target.value = "";
+  } catch (error) {
+    console.error("Erro no upload do veículo:", error);
+    onShowAlert("❌ Não consegui anexar o arquivo.");
+  }
 };
 
   const removeDocument = (index) => {
@@ -1044,20 +1058,29 @@ const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
               <span className="text-sm font-medium">Clique ou arraste ficheiros para anexar</span>
             </div>
             
-            {(formData.documents || []).length > 0 && (
-              <div className="mt-3 space-y-2">
-                {formData.documents.map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white border border-slate-200 p-2 rounded-lg text-sm">
-                    <span className="flex items-center gap-2 text-slate-600 font-medium">
-                      <FileText size={16} className="text-blue-500"/> {doc.name || doc}
-                    </span>
-                    <button type="button" onClick={() => removeDocument(i)} className="text-red-500 hover:bg-red-50 p-1 rounded transition-colors">
-                      <X size={16}/>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+           {(formData.documents || []).length > 0 && (
+  <div className="mt-3 space-y-2">
+    {formData.documents.map((doc, i) => (
+      <div
+        key={i}
+        className="flex items-center justify-between bg-white border border-slate-200 p-2 rounded-lg text-sm"
+      >
+        <span className="flex items-center gap-2 text-slate-600 font-medium">
+          <FileText size={16} className="text-blue-500" />
+          {doc?.name || doc}
+        </span>
+
+        <button
+          type="button"
+          onClick={() => removeDocument(i)}
+          className="text-red-500 hover:bg-red-50 p-1 rounded transition-colors"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    ))}
+  </div>
+)}
           </div>
         </div>
         <div className="flex justify-end gap-3 pt-4 border-t">
