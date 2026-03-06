@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { 
@@ -61,6 +63,36 @@ const formatMoney = (value) => {
 const parseMoney = (value) => {
   if (!value) return 0;
   return parseFloat(value.toString().replace(/\./g, '').replace(',', '.'));
+};
+
+const handleDownloadDocument = async (doc) => {
+  try {
+    // doc pode ser um objeto { name, path } OU pode ser string.
+    const fileName = doc?.name || doc?.fileName || doc?.filename || doc?.nome || String(doc);
+    const storagePath = doc?.path || doc?.storagePath || doc?.fullPath || doc?.caminho || String(doc);
+
+    if (!storagePath) {
+      onShowAlert("❌ Documento sem caminho para download.");
+      return;
+    }
+
+    const storage = getStorage();
+    const fileRef = ref(storage, storagePath);
+    const url = await getDownloadURL(fileRef);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName || "documento";
+    a.target = "_blank"; // ajuda no celular/PWA
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    onShowAlert("✅ Download iniciado!");
+  } catch (err) {
+    console.error("Erro ao baixar documento:", err);
+    onShowAlert("❌ Não consegui baixar. Verifique se o arquivo existe no Storage e se as permissões permitem.");
+  }
 };
 
 const generateInstallments = (count, firstDate, valueStr, statuses = []) => {
@@ -942,10 +974,30 @@ const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files).map(f => f.name);
-    setFormData({ ...formData, documents: [...(formData.documents || []), ...files] });
-  };
+  const handleFileUpload = async (e) => {
+  const selectedFiles = Array.from(e.target.files);
+  const storage = getStorage();
+
+  const uploadedDocs = await Promise.all(
+    selectedFiles.map(async (file) => {
+      const safeName = `${Date.now()}-${file.name}`;
+      const storagePath = `vehicles/${safeName}`;
+      const fileRef = ref(storage, storagePath);
+
+      await uploadBytes(fileRef, file);
+
+      return {
+        name: file.name,
+        path: storagePath
+      };
+    })
+  );
+
+  setFormData({
+    ...formData,
+    documents: [...(formData.documents || []), ...uploadedDocs]
+  });
+};
 
   const removeDocument = (index) => {
     const newDocs = [...(formData.documents || [])];
@@ -1095,10 +1147,30 @@ const SellVehicleModal = ({ isOpen, onClose, vehicle, onConfirm }) => {
     setSellData({ ...sellData, [name]: value });
   };
 
-  const handleClientFileUpload = (e) => {
-    const files = Array.from(e.target.files).map(f => f.name);
-    setSellData({ ...sellData, clientDocuments: [...(sellData.clientDocuments || []), ...files] });
-  };
+  const handleClientFileUpload = async (e) => {
+  const selectedFiles = Array.from(e.target.files);
+  const storage = getStorage();
+
+  const uploadedDocs = await Promise.all(
+    selectedFiles.map(async (file) => {
+      const safeName = `${Date.now()}-${file.name}`;
+      const storagePath = `clients/${safeName}`;
+      const fileRef = ref(storage, storagePath);
+
+      await uploadBytes(fileRef, file);
+
+      return {
+        name: file.name,
+        path: storagePath
+      };
+    })
+  );
+
+  setSellData({
+    ...sellData,
+    clientDocuments: [...(sellData.clientDocuments || []), ...uploadedDocs]
+  });
+};
 
   const removeClientDocument = (index) => {
     const newDocs = [...(sellData.clientDocuments || [])];
@@ -1355,7 +1427,7 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
                  </div>
                ))}
                {sale.clientDocuments?.map((doc, i) => (
-                 <div key={'c'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group" onClick={() => onShowAlert('A iniciar o download do documento do cliente: ' + doc)}>
+                 <div key={'c'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group" onClick={() => handleDownloadDocument(doc)}>
                    <div className="bg-indigo-100 p-1.5 rounded text-indigo-600 group-hover:bg-indigo-50 transition-colors"><IdCard size={16} /></div>
                    <span className="font-medium text-slate-700 group-hover:text-indigo-700">{doc}</span>
                    <ArrowDownToLine size={16} className="text-slate-400 group-hover:text-indigo-600 ml-2" />
@@ -1589,10 +1661,10 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onViewVe
                     <span className="text-xs font-bold text-slate-500 mb-2 block">Documentos Anexados</span>
                     <div className="flex flex-col gap-1">
                       {v?.documents?.map((doc, i) => (
-                        <button key={'v'+i} onClick={() => onShowAlert('A iniciar o download do documento do veículo: ' + doc)} className="text-xs text-left text-blue-600 hover:underline flex items-center gap-1"><ArrowDownToLine size={12}/> {doc}</button>
+                        <button key={'v'+i} onClick={() => onShowAlert('A iniciar o download do documento do veículo: ' + doc)} className="text-xs text-left text-blue-600 hover:underline flex items-center gap-1"><ArrowDownToLine size={12}/> {doc.name || doc}
                       ))}
                       {s?.clientDocuments?.map((doc, i) => (
-                        <button key={'c'+i} onClick={() => onShowAlert('A iniciar o download do documento do cliente: ' + doc)} className="text-xs text-left text-indigo-600 hover:underline flex items-center gap-1"><ArrowDownToLine size={12}/> {doc}</button>
+                        <button key={'c'+i} onClick={() => handleDownloadDocument(doc)} className="text-xs text-left text-indigo-600 hover:underline flex items-center gap-1"><ArrowDownToLine size={12}/> {doc.name || doc}
                       ))}
                     </div>
                   </div>
@@ -1725,7 +1797,7 @@ const ClientsView = ({ sales, searchQuery, onShowAlert }) => {
                     {client.documents.map((doc, i) => (
                       <div key={i} className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-200">
                         <span className="text-xs font-medium text-slate-600 truncate max-w-[200px]">{doc}</span>
-                        <button onClick={() => onShowAlert('A iniciar o download do documento: ' + doc)} className="text-blue-600 hover:bg-blue-100 p-1 rounded" title="Baixar Documento"><ArrowDownToLine size={14}/></button>
+                        <button onClick={() => handleDownloadDocument(doc)} className="text-blue-600 hover:bg-blue-100 p-1 rounded" title="Baixar Documento"><ArrowDownToLine size={14}/></button>
                       </div>
                     ))}
                   </div>
