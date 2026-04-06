@@ -66,19 +66,29 @@ const parseMoney = (value) => {
 
 const handleDownloadDocument = async (doc) => {
   try {
-    const url = doc?.path || doc?.fullPath || String(doc);
+    let url = doc?.path || doc?.fullPath || String(doc);
 
     if (!url || !url.startsWith('http')) {
       alert("❌ Link do documento inválido ou arquivo antigo.");
       return;
     }
 
-    // Abre o link do Cloudinary em uma nova aba
-    window.open(url, "_blank");
+    // MÁGICA DO CLOUDINARY: Adiciona a ordem de "Forçar Download" no link
+    if (url.includes('/upload/')) {
+      url = url.replace('/upload/', '/upload/fl_attachment/');
+    }
+
+    // Cria um botão invisível no seu site, clica nele rapidinho e depois some com ele
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = doc?.name || "documento"; // Sugere o nome original do arquivo
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     
   } catch (err) {
-    console.error("Erro ao abrir documento:", err);
-    alert("❌ Não consegui abrir o arquivo.");
+    console.error("Erro ao baixar documento:", err);
+    alert("❌ Não consegui baixar o arquivo.");
   }
 };
 
