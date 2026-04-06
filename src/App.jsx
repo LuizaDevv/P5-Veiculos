@@ -378,18 +378,18 @@ export default function App() {
     }
     
     try {
-      const vehiclesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'vehicles');
+      const vehiclesRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles');
       const unsubscribeVehicles = onSnapshot(vehiclesRef, (snapshot) => {
         setVehicles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         setLoading(false);
       }, (error) => console.error(error));
 
-      const salesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'sales');
+      const salesRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'sales');
       const unsubscribeSales = onSnapshot(salesRef, (snapshot) => {
         setSales(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       }, (error) => console.error(error));
 
-      const commissionsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'commissions');
+      const commissionsRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'commissions');
       const unsubscribeCommissions = onSnapshot(commissionsRef, (snapshot) => {
         setCommissions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       }, (error) => console.error(error));
@@ -421,7 +421,7 @@ export default function App() {
 
           if (isDefaulting) {
             try {
-              const saleRef = doc(db, 'artifacts', appId, 'users', user.uid, 'sales', sale.id);
+              const saleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'sales', sale.id);
               await updateDoc(saleRef, { paymentStatus: 'inadimplente' });
             } catch(e) {}
           }
@@ -453,7 +453,7 @@ export default function App() {
   const handleToggleCommission = async (id, currentStatus) => {
     if (!checkConnection()) return;
     try {
-      const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'commissions', id);
+      const docRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'commissions', id);
       await updateDoc(docRef, { status: currentStatus === 'pendente' ? 'paga' : 'pendente' });
     } catch (error) { console.error("Error updating commission:", error); }
   };
@@ -465,7 +465,7 @@ export default function App() {
       message: 'Tem certeza que deseja excluir esta comissão permanentemente?',
       onConfirm: async () => {
         if (!user || !db) return;
-        try { await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'commissions', id)); } 
+        try { await deleteDoc(doc(db, 'artifacts', appId, 'users', 'loja_global', 'commissions', id)); } 
         catch (error) { console.error("Error deleting commission:", error); }
       }
     });
@@ -473,10 +473,10 @@ export default function App() {
 
   const handleSaveVehicle = async (vehicleData) => {
     if (!checkConnection()) return;
-    const vehiclesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'vehicles');
+    const vehiclesRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles');
     try {
       if (vehicleData.id) {
-        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'vehicles', vehicleData.id);
+        const docRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles', vehicleData.id);
         const { id, ...dataToUpdate } = vehicleData;
         await updateDoc(docRef, dataToUpdate);
       } else {
@@ -495,7 +495,7 @@ export default function App() {
       onConfirm: async () => {
         if (!user || !db) return;
         try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'vehicles', id));
+          await deleteDoc(doc(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles', id));
           setIsViewModalOpen(false);
         } catch (error) { console.error("Error deleting vehicle:", error); }
       }
@@ -510,7 +510,7 @@ export default function App() {
       onConfirm: async () => {
         if (!user || !db) return;
         try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'sales', id));
+          await deleteDoc(doc(db, 'artifacts', appId, 'users', 'loja_global', 'sales', id));
           setSelectedSaleId(null);
         } catch (error) { console.error("Error deleting sale:", error); }
       }
@@ -520,7 +520,7 @@ export default function App() {
   const handleSellVehicle = async (saleData) => {
     if (!checkConnection() || !selectedVehicle) return;
     try {
-      const vehicleRef = doc(db, 'artifacts', appId, 'users', user.uid, 'vehicles', selectedVehicle.id);
+      const vehicleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles', selectedVehicle.id);
       await updateDoc(vehicleRef, { status: 'vendido' });
 
       const installmentsList = generateInstallments(
@@ -529,7 +529,7 @@ export default function App() {
         saleData.installmentValue
       );
 
-      const salesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'sales');
+      const salesRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'sales');
       await addDoc(salesRef, {
         vehicleId: selectedVehicle.id,
         ...saleData,
@@ -539,7 +539,7 @@ export default function App() {
       });
 
       const commissionValue = selectedVehicle.type === 'carro' ? 200 : 100;
-      const commissionsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'commissions');
+      const commissionsRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'commissions');
       await addDoc(commissionsRef, {
         vehicleType: selectedVehicle.type,
         clientName: saleData.clientName,
@@ -560,7 +560,7 @@ export default function App() {
   const handleAddManualCommission = async (data) => {
     if (!checkConnection()) return;
     try {
-      const commissionsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'commissions');
+      const commissionsRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'commissions');
       await addDoc(commissionsRef, {
         vehicleType: 'Outro',
         clientName: data.clientName,
@@ -582,7 +582,7 @@ export default function App() {
     if (!saleId || !checkConnection()) return;
     const sale = sales.find(s => s.id === saleId);
     if (sale && sale.paymentStatus !== targetStatus) {
-      const saleRef = doc(db, 'artifacts', appId, 'users', user.uid, 'sales', saleId);
+      const saleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'sales', saleId);
       await updateDoc(saleRef, { paymentStatus: targetStatus });
     }
   };
@@ -594,7 +594,7 @@ export default function App() {
     if (!vehicleId || !checkConnection()) return;
     const vehicle = vehicles.find(v => v.id === vehicleId);
     if (vehicle && vehicle.type !== targetType) {
-      const vehicleRef = doc(db, 'artifacts', appId, 'users', user.uid, 'vehicles', vehicleId);
+      const vehicleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles', vehicleId);
       await updateDoc(vehicleRef, { type: targetType });
     }
   };
@@ -607,7 +607,7 @@ export default function App() {
     const updatedInstallments = sale.installmentsList.map(inst => 
       inst.id === installmentId ? { ...inst, ...updates } : inst
     );
-    const saleRef = doc(db, 'artifacts', appId, 'users', user.uid, 'sales', saleId);
+    const saleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'sales', saleId);
     await updateDoc(saleRef, { installmentsList: updatedInstallments });
   };
 
