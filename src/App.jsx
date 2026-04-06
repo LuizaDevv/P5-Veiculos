@@ -69,15 +69,16 @@ const handleDownloadDocument = async (doc) => {
     const url = doc?.path || doc?.fullPath || String(doc);
 
     if (!url || !url.startsWith('http')) {
-      onShowAlert("❌ Link do documento inválido ou arquivo antigo.");
+      alert("❌ Link do documento inválido ou arquivo antigo.");
       return;
     }
 
+    // Abre o link do Cloudinary em uma nova aba
     window.open(url, "_blank");
     
   } catch (err) {
     console.error("Erro ao abrir documento:", err);
-    onShowAlert("❌ Não consegui abrir o arquivo.");
+    alert("❌ Não consegui abrir o arquivo.");
   }
 };
 
@@ -1125,7 +1126,11 @@ const ViewVehicleModal = ({ isOpen, onClose, vehicle, onEdit, onSell, onDelete }
             <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><FileText size={18}/> Documentos Anexados</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {vehicle.documents.map((doc, i) => (
-                <div key={i} className="flex items-center gap-3 bg-white border border-slate-200 p-3 rounded-lg text-sm cursor-pointer hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors shadow-sm">
+                <div 
+                  key={i} 
+                  onClick={() => handleDownloadDocument(doc)} 
+                  className="flex items-center gap-3 bg-white border border-slate-200 p-3 rounded-lg text-sm cursor-pointer hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors shadow-sm"
+                >
                   <div className="bg-blue-100 p-2 rounded text-blue-600"><FileText size={16} /></div>
                   <span className="font-medium truncate flex-1">{doc?.name || doc}</span>
                   <ArrowDownToLine size={16} className="text-slate-400" />
