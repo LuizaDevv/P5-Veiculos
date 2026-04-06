@@ -1859,7 +1859,7 @@ const ClientsView = ({ sales, searchQuery, onShowAlert }) => {
                   <div className="space-y-2">
                     {client.documents.map((doc, i) => (
                       <div key={i} className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-200">
-                        <span className="text-xs font-medium text-slate-600 truncate max-w-[200px]">{doc}</span>
+                        <span className="text-xs font-medium text-slate-600 truncate max-w-[200px]">{doc?.name || doc}</span>
                         <button onClick={() => handleDownloadDocument(doc)} className="text-blue-600 hover:bg-blue-100 p-1 rounded" title="Baixar Documento"><ArrowDownToLine size={14}/></button>
                       </div>
                     ))}
