@@ -1127,7 +1127,7 @@ const ViewVehicleModal = ({ isOpen, onClose, vehicle, onEdit, onSell, onDelete }
               {vehicle.documents.map((doc, i) => (
                 <div key={i} className="flex items-center gap-3 bg-white border border-slate-200 p-3 rounded-lg text-sm cursor-pointer hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors shadow-sm">
                   <div className="bg-blue-100 p-2 rounded text-blue-600"><FileText size={16} /></div>
-                  <span className="font-medium truncate flex-1">{doc}</span>
+                  <span className="font-medium truncate flex-1">{doc?.name || doc}</span>
                   <ArrowDownToLine size={16} className="text-slate-400" />
                 </div>
               ))}
@@ -1279,7 +1279,7 @@ const handleClientFileUpload = async (e) => {
               <div className="mt-3 space-y-2">
                 {sellData.clientDocuments.map((docName, i) => (
                   <div key={i} className="flex items-center justify-between bg-white border border-slate-200 p-2 rounded-lg text-sm">
-                    <span className="flex items-center gap-2 text-slate-600 font-medium"><IdCard size={16} className="text-indigo-500"/> {docName}</span>
+                    <span className="flex items-center gap-2 text-slate-600 font-medium"><IdCard size={16} className="text-indigo-500"/> {docName?.name || docName}</span>
                     <button type="button" onClick={() => removeClientDocument(i)} className="text-red-500 hover:bg-red-50 p-1 rounded transition-colors"><X size={16}/></button>
                   </div>
                 ))}
@@ -1456,14 +1456,14 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
                {vehicle.documents?.map((doc, i) => (
                  <div key={'v'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group" onClick={() => onShowAlert('A iniciar o download do documento do veículo: ' + doc)}>
                    <div className="bg-blue-100 p-1.5 rounded text-blue-600 group-hover:bg-blue-50 transition-colors"><FileText size={16} /></div>
-                   <span className="font-medium text-slate-700 group-hover:text-blue-700">{doc}</span>
+                   <span className="font-medium text-slate-700 group-hover:text-blue-700">{doc?.name || doc}</span>
                    <ArrowDownToLine size={16} className="text-slate-400 group-hover:text-blue-600 ml-2" />
                  </div>
                ))}
                {sale.clientDocuments?.map((doc, i) => (
                  <div key={'c'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group" onClick={() => handleDownloadDocument(doc)}>
                    <div className="bg-indigo-100 p-1.5 rounded text-indigo-600 group-hover:bg-indigo-50 transition-colors"><IdCard size={16} /></div>
-                   <span className="font-medium text-slate-700 group-hover:text-indigo-700">{doc}</span>
+                   <span className="font-medium text-slate-700 group-hover:text-indigo-700">{doc?.name || doc}</span>
                    <ArrowDownToLine size={16} className="text-slate-400 group-hover:text-indigo-600 ml-2" />
                  </div>
                ))}
