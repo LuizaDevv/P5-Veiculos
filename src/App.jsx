@@ -66,31 +66,18 @@ const parseMoney = (value) => {
 
 const handleDownloadDocument = async (doc) => {
   try {
-    // doc pode ser um objeto { name, path } OU pode ser string.
-    const fileName = doc?.name || doc?.fileName || doc?.filename || doc?.nome || String(doc);
-    const storagePath = doc?.path || doc?.storagePath || doc?.fullPath || doc?.caminho || String(doc);
+    const url = doc?.path || doc?.fullPath || String(doc);
 
-    if (!storagePath) {
-      onShowAlert("❌ Documento sem caminho para download.");
+    if (!url || !url.startsWith('http')) {
+      onShowAlert("❌ Link do documento inválido ou arquivo antigo.");
       return;
     }
 
-    const storage = getStorage();
-    const fileRef = ref(storage, storagePath);
-    const url = await getDownloadURL(fileRef);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName || "documento";
-    a.target = "_blank"; // ajuda no celular/PWA
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    onShowAlert("✅ Download iniciado!");
+    window.open(url, "_blank");
+    
   } catch (err) {
-    console.error("Erro ao baixar documento:", err);
-    onShowAlert("❌ Não consegui baixar. Verifique se o arquivo existe no Storage e se as permissões permitem.");
+    console.error("Erro ao abrir documento:", err);
+    onShowAlert("❌ Não consegui abrir o arquivo.");
   }
 };
 
@@ -973,7 +960,7 @@ const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileUpload = async (e) => {
+const handleFileUpload = async (e) => {
   try {
     const selectedFiles = Array.from(e.target.files || []);
 
@@ -982,19 +969,27 @@ const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
       return;
     }
 
-    const storage = getStorage();
+    const cloudName = "duzumcv9c"; 
+    const uploadPreset = "meu_app_carros"; 
 
     const uploadedDocs = await Promise.all(
       selectedFiles.map(async (file) => {
-        const safeName = `${Date.now()}-${file.name}`;
-        const storagePath = `vehicles/${safeName}`;
-        const fileRef = ref(storage, storagePath);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
 
-        await uploadBytes(fileRef, file);
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error.message);
 
         return {
           name: file.name,
-          path: storagePath,
+          path: data.secure_url 
         };
       })
     );
@@ -1007,7 +1002,7 @@ const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
     onShowAlert("✅ Arquivo(s) anexado(s) com sucesso.");
     e.target.value = "";
   } catch (error) {
-    console.error("Erro no upload do veículo:", error);
+    console.error("Erro no upload pro Cloudinary:", error);
     onShowAlert("❌ Não consegui anexar o arquivo.");
   }
 };
@@ -1173,29 +1168,42 @@ const SellVehicleModal = ({ isOpen, onClose, vehicle, onConfirm }) => {
     setSellData({ ...sellData, [name]: value });
   };
 
-  const handleClientFileUpload = async (e) => {
-  const selectedFiles = Array.from(e.target.files);
-  const storage = getStorage();
+const handleClientFileUpload = async (e) => {
+  try {
+    const selectedFiles = Array.from(e.target.files || []);
+    if (!selectedFiles.length) return;
 
-  const uploadedDocs = await Promise.all(
-    selectedFiles.map(async (file) => {
-      const safeName = `${Date.now()}-${file.name}`;
-      const storagePath = `clients/${safeName}`;
-      const fileRef = ref(storage, storagePath);
+    const cloudName = "duzumcv9c"; 
+    const uploadPreset = "meu_app_carros";
 
-      await uploadBytes(fileRef, file);
+    const uploadedDocs = await Promise.all(
+      selectedFiles.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
 
-      return {
-        name: file.name,
-        path: storagePath
-      };
-    })
-  );
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: "POST",
+          body: formData
+        });
 
-  setSellData({
-    ...sellData,
-    clientDocuments: [...(sellData.clientDocuments || []), ...uploadedDocs]
-  });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        return {
+          name: file.name,
+          path: data.secure_url
+        };
+      })
+    );
+
+    setSellData({
+      ...sellData,
+      clientDocuments: [...(sellData.clientDocuments || []), ...uploadedDocs]
+    });
+  } catch (error) {
+    console.error("Erro no upload de cliente pro Cloudinary:", error);
+  }
 };
 
   const removeClientDocument = (index) => {
