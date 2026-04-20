@@ -634,7 +634,12 @@ export default function App() {
     if (!checkConnection()) return;
     const saleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'sales', saleId);
     await updateDoc(saleRef, updates);
-    setAlertMessage("✅ Dados do cliente atualizados com sucesso.");
+
+    if (updates?.installmentsList || updates?.installments || updates?.installmentValue || updates?.firstInstallmentDate || updates?.financedAmount || updates?.saleValue || updates?.downPayment) {
+      setAlertMessage("✅ Dados financeiros atualizados com sucesso.");
+    } else {
+      setAlertMessage("✅ Dados do cliente atualizados com sucesso.");
+    }
   };
 
   const handleUpdateVehicleDetails = async (vehicleId, updates) => {
@@ -1591,7 +1596,7 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
       saleValue: sale.saleValue || '',
       downPayment: sale.downPayment || '',
       financedAmount: sale.financedAmount || '',
-      installments: sale.installments || '',
+      installments: sale.installmentsList?.length || sale.installments || '',
       installmentValue: sale.installmentValue || '',
       firstInstallmentDate: sale.firstInstallmentDate || ''
     });
@@ -1614,7 +1619,53 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
 
   const saveFinancialDetails = async () => {
     if (!sale?.id) return;
-    await onUpdateSale(sale.id, financialData);
+
+    const totalValueNum = parseMoney(financialData.saleValue || sale.saleValue || '0');
+    const downPaymentNum = parseMoney(financialData.downPayment || sale.downPayment || '0');
+    const typedFinancedAmountNum = parseMoney(financialData.financedAmount || '0');
+    const installmentsCount = Math.max(parseInt(financialData.installments || 0, 10) || 0, 0);
+    const installmentValueNum = parseMoney(financialData.installmentValue || sale.installmentValue || '0');
+    const fallbackFirstDate = sale.firstInstallmentDate || sale.installmentsList?.[0]?.dueDate || '';
+    const firstDate = financialData.firstInstallmentDate || fallbackFirstDate;
+
+    const resolvedFinancedAmount = typedFinancedAmountNum > 0
+      ? typedFinancedAmountNum
+      : Math.max(totalValueNum - downPaymentNum, 0);
+
+    const existingInstallments = Array.isArray(sale.installmentsList) ? sale.installmentsList : [];
+    let updatedInstallmentsList = [];
+
+    if (installmentsCount > 0 && firstDate) {
+      let currentDate = new Date(firstDate + 'T00:00:00');
+
+      updatedInstallmentsList = Array.from({ length: installmentsCount }, (_, index) => {
+        const existing = existingInstallments[index];
+        const item = {
+          id: existing?.id || crypto.randomUUID(),
+          number: index + 1,
+          dueDate: currentDate.toISOString().split('T')[0],
+          value: installmentValueNum,
+          status: existing?.status || 'pendente',
+          observation: existing?.observation || ''
+        };
+
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        return item;
+      });
+    }
+
+    const payload = {
+      saleValue: totalValueNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      downPayment: downPaymentNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      financedAmount: resolvedFinancedAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      installments: installmentsCount,
+      installmentValue: installmentValueNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      firstInstallmentDate: firstDate,
+      installmentsList: updatedInstallmentsList
+    };
+
+    await onUpdateSale(sale.id, payload);
+    setFinancialData(payload);
     setIsEditingFinancial(false);
   };
 
@@ -1992,11 +2043,11 @@ const SaleCard = ({ sale, vehicle, onDragStart, onClick, onDelete, borderHover =
     </div>
 
     <div className="flex flex-wrap gap-2 mb-3">
-      {sale.installments && (
+      {(sale.installmentsList?.length || sale.installments) ? (
         <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold">
-          {sale.installments}x de R$ {parseMoney(sale.installmentValue).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+          {sale.installmentsList?.length || sale.installments}x de R$ {parseMoney(sale.installmentValue).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
         </span>
-      )}
+      ) : null}
       {(vehicle?.documents?.length > 0 || sale?.clientDocuments?.length > 0) && (
         <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
           <FileText size={10}/> {(vehicle?.documents?.length || 0) + (sale?.clientDocuments?.length || 0)} anexo(s)
@@ -2338,12 +2389,12 @@ const FinanceView = ({ sales }) => (
                 <td className="p-4 text-right font-medium text-blue-600">R$ {parseMoney(sale.downPayment).toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
                 <td className="p-4 text-right font-medium text-orange-600">R$ {parseMoney(sale.financedAmount).toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
                 <td className="p-4 text-center">
-                  {sale.installments ? (
+                  {(sale.installmentsList?.length || sale.installments) ? (
                     <div>
                       <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold border border-slate-200">
-                        {sale.installments}x de R$ {parseMoney(sale.installmentValue).toLocaleString('pt-BR', {minimumFractionDigits:2})}
+                        {sale.installmentsList?.length || sale.installments}x de R$ {parseMoney(sale.installmentValue).toLocaleString('pt-BR', {minimumFractionDigits:2})}
                       </span>
-                      <div className="text-[10px] text-slate-400 mt-1 uppercase">1º Venc: {new Date(sale.firstInstallmentDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</div>
+                      <div className="text-[10px] text-slate-400 mt-1 uppercase">1º Venc: {sale.firstInstallmentDate ? new Date(sale.firstInstallmentDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '--'}</div>
                     </div>
                   ) : <span className="text-xs text-slate-400 italic">À vista</span>}
                 </td>
