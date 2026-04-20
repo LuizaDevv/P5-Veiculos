@@ -968,13 +968,13 @@ const VehicleCard = ({ vehicle, onDragStart, onClick, onDelete }) => (
     draggable
     onDragStart={(e) => onDragStart(e, vehicle)}
     onClick={onClick}
-    className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-blue-300 transition-all relative group"
+    className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-blue-300 transition-all relative group overflow-hidden"
   >
     <button onClick={(e) => { e.stopPropagation(); onDelete(vehicle.id); }} className="absolute top-2 right-2 text-slate-200 hover:text-red-500 hover:bg-red-50 p-1.5 rounded z-10 transition-colors">
       <Trash2 size={16}/>
     </button>
-    <div className="flex justify-between items-start mb-2 pr-6">
-      <h4 className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-1">
+    <div className="flex items-start gap-2 mb-2 pr-6 min-w-0">
+      <h4 className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2 min-w-0 flex-1 break-words">
         {vehicle.brand} {vehicle.model}
       </h4>
       <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider whitespace-nowrap ml-2">
@@ -982,24 +982,24 @@ const VehicleCard = ({ vehicle, onDragStart, onClick, onDelete }) => (
       </span>
     </div>
     
-    <div className="text-xs text-slate-500 mb-3 flex flex-col gap-1 border-b border-slate-100 pb-2">
-      <div className="flex justify-between">
-        <span>Cor: {vehicle.color || 'N/D'}</span>
-        <span>Chassi: {vehicle.chassis ? 'OK' : 'Pendente'}</span>
+    <div className="text-xs text-slate-500 mb-3 flex flex-col gap-1 border-b border-slate-100 pb-2 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 min-w-0">
+        <span className="break-words">Cor: {vehicle.color || 'N/D'}</span>
+        <span className="shrink-0">Chassi: {vehicle.chassis ? 'OK' : 'Pendente'}</span>
       </div>
       {vehicle.documents && vehicle.documents.length > 0 && (
-        <span className="flex items-center gap-1 text-blue-600 font-medium mt-1">
-          <FileText size={12}/> {vehicle.documents.length} anexo(s)
+        <span className="flex items-center gap-1 text-blue-600 font-medium mt-1 min-w-0">
+          <FileText size={12} className="shrink-0"/> <span className="break-words">{vehicle.documents.length} anexo(s)</span>
         </span>
       )}
     </div>
 
-    <div className="flex items-center justify-between text-sm">
-      <div className="flex flex-col">
+    <div className="flex items-end justify-between text-sm gap-3 min-w-0">
+      <div className="flex flex-col min-w-0">
         <span className="text-slate-400 text-xs uppercase tracking-wider font-semibold">Placa</span>
-        <span className="text-slate-700 font-mono font-medium">{vehicle.plate || '---'}</span>
+        <span className="text-slate-700 font-mono font-medium break-all">{vehicle.plate || '---'}</span>
       </div>
-      <div className="flex flex-col items-end">
+      <div className="flex flex-col items-end shrink-0 text-right">
         <span className="text-slate-400 text-xs uppercase tracking-wider font-semibold">Preço</span>
         <span className="text-slate-900 font-bold">
           {vehicle.price ? `R$ ${parseMoney(vehicle.price).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'Sob consulta'}
@@ -2054,10 +2054,10 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
 
     if (data.type === 'stock') {
       return (
-        <div key={idx} className="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+        <div key={idx} className="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden min-w-0">
           <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Estoque</div>
-          <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-1">{v.brand} {v.model}</div>
-          <div className="font-mono text-sm text-slate-500 mb-4">{v.plate} • {v.year}</div>
+          <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-2 break-words min-w-0">{v.brand} {v.model}</div>
+          <div className="font-mono text-sm text-slate-500 mb-4 break-all">{v.plate} • {v.year}</div>
           <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-4">
             <span className="font-bold text-blue-600">R$ {parseMoney(v.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             <div className="flex gap-2 items-center">
@@ -2072,11 +2072,11 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
                   <button
                     key={`sv-${i}`}
                     onClick={() => handleDownloadDocument(doc)}
-                    className="w-full text-left bg-blue-50 border border-blue-100 hover:bg-blue-100 text-blue-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between gap-2"
+                    className="w-full text-left bg-blue-50 border border-blue-100 hover:bg-blue-100 text-blue-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-start justify-between gap-2 min-w-0"
                   >
-                    <span className="truncate">{doc?.name || doc}</span>
-                    <span className="shrink-0 flex items-center gap-1">
-                      <ArrowDownToLine size={15} /> Baixar
+                    <span className="min-w-0 flex-1 break-words">{doc?.name || doc}</span>
+                    <span className="shrink-0 flex items-center gap-1 self-start">
+                      <ArrowDownToLine size={15} className="shrink-0" /> Baixar
                     </span>
                   </button>
                 ))}
@@ -2094,7 +2094,7 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
         : 'bg-emerald-500 text-white';
 
       return (
-        <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col">
+        <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col min-w-0">
           <div className={`absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider ${badgeColors}`}>
             {s.paymentStatus === 'quitado' ? 'Arquivo Morto' : s.paymentStatus === 'inadimplente' ? 'Inadimplente' : 'Vendido (Em Dia)'}
           </div>
@@ -2103,24 +2103,24 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
             <Trash2 size={16} />
           </button>
 
-          <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-1 pr-6">
+          <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-2 pr-6 break-words min-w-0">
             {v ? `${v.brand} ${v.model}` : 'Veículo Removido'}
           </div>
 
-          <div className="font-mono text-sm text-slate-400 mb-3">{v?.plate}</div>
+          <div className="font-mono text-sm text-slate-400 mb-3 break-all">{v?.plate}</div>
 
-          <div className="flex flex-col gap-1 text-sm text-slate-700 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <span className="font-bold flex items-center gap-1.5"><Users size={14} className="text-slate-400" /> {s.clientName}</span>
-            <span className="text-xs text-slate-500 pl-5">{s.clientPhone}</span>
-            <span className="text-xs text-slate-500 pl-5">
+          <div className="flex flex-col gap-1 text-sm text-slate-700 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100 min-w-0">
+            <span className="font-bold flex items-start gap-1.5 min-w-0"><Users size={14} className="text-slate-400 shrink-0 mt-0.5" /> <span className="break-words min-w-0">{s.clientName}</span></span>
+            <span className="text-xs text-slate-500 pl-5 break-words">{s.clientPhone}</span>
+            <span className="text-xs text-slate-500 pl-5 break-words">
               {s.clientStreet ? `${s.clientStreet}, nº ${s.clientNumber || 'S/N'} - ${s.clientNeighborhood || ''}, ${s.clientCity || ''}-${s.clientState || ''}` : 'Endereço não informado'}
             </span>
           </div>
 
-          <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-3 gap-2">
-            <button onClick={() => onPrint(getContractHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><FileText size={14} /> Contrato</button>
-            <button onClick={() => onPrint(getSpreadsheetHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><ArrowDownToLine size={14} /> Planilha</button>
-            <button onClick={() => onPrint(getReportHTML(s, v))} className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 py-1.5 rounded flex justify-center items-center gap-1 text-xs font-bold transition-colors shadow-sm"><Activity size={14} /> Relatório</button>
+          <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button onClick={() => onPrint(getContractHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-2 rounded flex justify-center items-center gap-1.5 text-xs font-bold transition-colors shadow-sm whitespace-nowrap"><FileText size={14} /> Contrato</button>
+            <button onClick={() => onPrint(getSpreadsheetHTML(s, v))} className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 py-2 rounded flex justify-center items-center gap-1.5 text-xs font-bold transition-colors shadow-sm whitespace-nowrap"><ArrowDownToLine size={14} /> Planilha</button>
+            <button onClick={() => onPrint(getReportHTML(s, v))} className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 py-2 rounded flex justify-center items-center gap-1.5 text-xs font-bold transition-colors shadow-sm whitespace-nowrap"><Activity size={14} /> Relatório</button>
           </div>
 
           {(s.clientDocuments?.length > 0 || v?.documents?.length > 0) && (
@@ -2131,10 +2131,10 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
                   <button
                     key={'v' + i}
                     onClick={() => handleDownloadDocument(doc)}
-                    className="w-full text-left bg-blue-50 border border-blue-100 hover:bg-blue-100 text-blue-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between gap-2"
+                    className="w-full text-left bg-blue-50 border border-blue-100 hover:bg-blue-100 text-blue-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-start justify-between gap-2 min-w-0"
                   >
-                    <span className="truncate">{doc?.name || doc}</span>
-                    <span className="shrink-0 flex items-center gap-1"><ArrowDownToLine size={15} /> Baixar</span>
+                    <span className="min-w-0 flex-1 break-words">{doc?.name || doc}</span>
+                    <span className="shrink-0 flex items-center gap-1 self-start"><ArrowDownToLine size={15} className="shrink-0" /> Baixar</span>
                   </button>
                 ))}
 
@@ -2142,10 +2142,10 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
                   <button
                     key={'c' + i}
                     onClick={() => handleDownloadDocument(doc)}
-                    className="w-full text-left bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between gap-2"
+                    className="w-full text-left bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-start justify-between gap-2 min-w-0"
                   >
-                    <span className="truncate">{doc?.name || doc}</span>
-                    <span className="shrink-0 flex items-center gap-1"><ArrowDownToLine size={15} /> Baixar</span>
+                    <span className="min-w-0 flex-1 break-words">{doc?.name || doc}</span>
+                    <span className="shrink-0 flex items-center gap-1 self-start"><ArrowDownToLine size={15} className="shrink-0" /> Baixar</span>
                   </button>
                 ))}
               </div>
@@ -2246,47 +2246,47 @@ const ClientsView = ({ sales, searchQuery, onShowAlert, onQuickSell }) => {
     <div className="flex-1 overflow-auto p-4 md:p-8 bg-slate-50">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {uniqueClients.map(client => (
-          <div key={client.clientCpf} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4 mb-5 border-b border-slate-100 pb-4">
+          <div key={client.clientCpf} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow min-w-0 overflow-hidden">
+            <div className="flex items-start gap-4 mb-5 border-b border-slate-100 pb-4 min-w-0">
               <div className="bg-blue-50 text-blue-600 p-3 rounded-full"><Users size={24} /></div>
-              <div>
-                <h4 className="font-bold text-slate-800 text-lg">{client.clientName}</h4>
+              <div className="min-w-0">
+                <h4 className="font-bold text-slate-800 text-lg break-words">{client.clientName}</h4>
                 <div className="text-xs text-slate-500 font-medium">Cadastrado no sistema</div>
               </div>
             </div>
             
             <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2">
-                <div><span className="block text-xs text-slate-400 font-semibold uppercase">CPF</span><span className="font-mono text-slate-700">{client.clientCpf}</span></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div><span className="block text-xs text-slate-400 font-semibold uppercase">CPF</span><span className="font-mono text-slate-700 break-all">{client.clientCpf}</span></div>
                 <div><span className="block text-xs text-slate-400 font-semibold uppercase">RG</span><span className="text-slate-700">{client.clientRg || 'N/D'}</span></div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div><span className="block text-xs text-slate-400 font-semibold uppercase">Telefone</span><span className="text-slate-700">{client.clientPhone}</span></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div><span className="block text-xs text-slate-400 font-semibold uppercase">Telefone</span><span className="text-slate-700 break-words">{client.clientPhone}</span></div>
                 <div><span className="block text-xs text-slate-400 font-semibold uppercase">Estado Civil</span><span className="text-slate-700">{client.clientMaritalStatus || 'N/D'}</span></div>
               </div>
               <div className="pt-2 border-t border-slate-50">
                 <span className="block text-xs text-slate-400 font-semibold uppercase mb-1">Endereço Completo</span>
                 <span className="flex items-start gap-2 text-slate-700 leading-tight">
                   <MapPin size={16} className="text-slate-400 shrink-0 mt-0.5"/> 
-                  <span>{client.clientStreet ? `${client.clientStreet}, nº ${client.clientNumber} - ${client.clientNeighborhood}, ${client.clientCity}-${client.clientState}` : client.clientAddress || 'Endereço não cadastrado'}</span>
+                  <span className="break-words min-w-0">{client.clientStreet ? `${client.clientStreet}, nº ${client.clientNumber} - ${client.clientNeighborhood}, ${client.clientCity}-${client.clientState}` : client.clientAddress || 'Endereço não cadastrado'}</span>
                 </span>
               </div>
               
               {/* Client Documents View */}
               {client.documents && client.documents.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-slate-100">
-                  <span className="block text-xs text-slate-500 font-bold uppercase mb-2 flex items-center gap-1"><FolderArchive size={14}/> Documentos Pessoais</span>
+                  <span className="block text-xs text-slate-500 font-bold uppercase mb-2 flex items-center gap-1"><FolderArchive size={14} className="shrink-0"/> Documentos Pessoais</span>
                   <div className="space-y-2">
                     {client.documents.map((doc, i) => (
                       <button
                         key={i}
                         onClick={() => handleDownloadDocument(doc)}
-                        className="w-full text-left bg-slate-50 border border-slate-200 hover:bg-slate-100 px-3 py-3.5 md:py-2.5 rounded-lg transition-colors flex items-center justify-between gap-2"
+                        className="w-full text-left bg-slate-50 border border-slate-200 hover:bg-slate-100 px-3 py-3.5 md:py-2.5 rounded-lg transition-colors flex items-start justify-between gap-2 min-w-0"
                         title="Baixar Documento"
                       >
-                        <span className="text-sm font-semibold text-slate-700 truncate">{doc?.name || doc}</span>
-                        <span className="text-blue-600 shrink-0 flex items-center gap-1 text-sm font-bold">
-                          <ArrowDownToLine size={15}/> Baixar
+                        <span className="text-sm font-semibold text-slate-700 min-w-0 flex-1 break-words">{doc?.name || doc}</span>
+                        <span className="text-blue-600 shrink-0 flex items-center gap-1 text-sm font-bold self-start">
+                          <ArrowDownToLine size={15} className="shrink-0"/> Baixar
                         </span>
                       </button>
                     ))}
