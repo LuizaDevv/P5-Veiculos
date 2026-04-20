@@ -10,7 +10,7 @@ import {
   DollarSign, CheckCircle, LayoutDashboard, 
   Users, Wallet, AlertCircle, UploadCloud, TrendingUp, Activity, PieChart,
   FileText, ArrowDownToLine, Clock, AlertTriangle, Archive, FolderArchive,
-  ChevronDown, MapPin, Briefcase, IdCard, Calendar as CalendarIcon
+  ChevronDown, MapPin, Briefcase, IdCard, Calendar as CalendarIcon, Pencil
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
@@ -1558,8 +1558,10 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
   };
   const [isEditingClient, setIsEditingClient] = useState(false);
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
+  const [isEditingFinancial, setIsEditingFinancial] = useState(false);
   const [clientData, setClientData] = useState({});
   const [vehicleData, setVehicleData] = useState({});
+  const [financialData, setFinancialData] = useState({});
 
   useEffect(() => {
     if (!sale) return;
@@ -1584,8 +1586,17 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
       renavam: vehicle.renavam || '',
       chassis: vehicle.chassis || ''
     });
+    setFinancialData({
+      saleValue: sale.saleValue || '',
+      downPayment: sale.downPayment || '',
+      financedAmount: sale.financedAmount || '',
+      installments: sale.installments || '',
+      installmentValue: sale.installmentValue || '',
+      firstInstallmentDate: sale.firstInstallmentDate || ''
+    });
     setIsEditingClient(false);
     setIsEditingVehicle(false);
+    setIsEditingFinancial(false);
   }, [sale, vehicle]);
 
   const saveClientDetails = async () => {
@@ -1598,6 +1609,12 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
     if (!vehicle?.id) return;
     await onUpdateVehicle(vehicle.id, vehicleData);
     setIsEditingVehicle(false);
+  };
+
+  const saveFinancialDetails = async () => {
+    if (!sale?.id) return;
+    await onUpdateSale(sale.id, financialData);
+    setIsEditingFinancial(false);
   };
 
   if (!sale) return null;
@@ -1621,12 +1638,6 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
             <p className="text-slate-500 text-sm mt-2">Registado a {new Date(sale.saleDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
           </div>
           <div className="flex flex-wrap gap-2 w-full md:w-auto mt-2 md:mt-0">
-            <button onClick={() => setIsEditingClient(prev => !prev)} className="flex-1 md:flex-none justify-center bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap">
-              <Users size={16} className="shrink-0"/> {isEditingClient ? 'Cancelar Edição Cliente' : 'Editar Cliente'}
-            </button>
-            <button onClick={() => setIsEditingVehicle(prev => !prev)} className="flex-1 md:flex-none justify-center bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-700 px-3 py-2 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap">
-              <Car size={16} className="shrink-0"/> {isEditingVehicle ? 'Cancelar Edição Veículo' : 'Editar Veículo'}
-            </button>
             <button onClick={() => onPrint(getContractHTML(sale, vehicle))} className="flex-1 md:flex-none justify-center bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap">
               <FileText size={16} className="text-blue-600 shrink-0"/> Contrato
             </button>
@@ -1642,7 +1653,12 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
         {/* INFO GRID - MAXIMUM INFO */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-4 border-b border-slate-200 pb-2"><Users size={18} className="text-blue-500"/> Dados do Cliente</h4>
+            <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
+              <h4 className="flex items-center gap-2 text-slate-800 font-bold"><Users size={18} className="text-blue-500"/> Dados do Cliente</h4>
+              <button onClick={() => setIsEditingClient(prev => !prev)} className={`p-1.5 rounded-lg border transition-colors ${isEditingClient ? 'bg-slate-200 border-slate-400 text-slate-700' : 'bg-white border-slate-300 text-slate-500 hover:text-slate-700 hover:border-slate-400'}`} title="Editar dados do cliente">
+                <Pencil size={14} />
+              </button>
+            </div>
             <div className="space-y-3 text-sm">
               <div><span className="block text-xs text-slate-500 font-semibold uppercase">Nome</span>{isEditingClient ? <input value={clientData.clientName || ''} onChange={(e) => setClientData({...clientData, clientName: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{sale.clientName}</span>}</div>
               <div className="grid grid-cols-2 gap-2">
@@ -1670,7 +1686,12 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
           </div>
 
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-4 border-b border-slate-200 pb-2"><Car size={18} className="text-orange-500"/> Detalhes do Veículo</h4>
+            <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
+              <h4 className="flex items-center gap-2 text-slate-800 font-bold"><Car size={18} className="text-orange-500"/> Detalhes do Veículo</h4>
+              <button onClick={() => setIsEditingVehicle(prev => !prev)} className={`p-1.5 rounded-lg border transition-colors ${isEditingVehicle ? 'bg-slate-200 border-slate-400 text-slate-700' : 'bg-white border-slate-300 text-slate-500 hover:text-slate-700 hover:border-slate-400'}`} title="Editar dados do veículo">
+                <Pencil size={14} />
+              </button>
+            </div>
             <div className="space-y-3 text-sm">
               <div><span className="block text-xs text-slate-500 font-semibold uppercase">Veículo</span>{isEditingVehicle ? <div className="grid grid-cols-2 gap-2"><input value={vehicleData.brand || ''} onChange={(e) => setVehicleData({...vehicleData, brand: e.target.value})} placeholder="Marca" className="w-full border border-slate-300 rounded-lg p-2 text-sm" /><input value={vehicleData.model || ''} onChange={(e) => setVehicleData({...vehicleData, model: e.target.value})} placeholder="Modelo" className="w-full border border-slate-300 rounded-lg p-2 text-sm" /></div> : <span className="font-bold text-slate-800 text-base">{vehicle.brand} {vehicle.model}</span>}</div>
               <div className="grid grid-cols-2 gap-2">
@@ -1686,12 +1707,41 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
           </div>
 
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-4 border-b border-slate-200 pb-2"><Wallet size={18} className="text-emerald-500"/> Resumo Financeiro</h4>
+            <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
+              <h4 className="flex items-center gap-2 text-slate-800 font-bold"><Wallet size={18} className="text-emerald-500"/> Resumo Financeiro</h4>
+              <button onClick={() => setIsEditingFinancial(prev => !prev)} className={`p-1.5 rounded-lg border transition-colors ${isEditingFinancial ? 'bg-slate-200 border-slate-400 text-slate-700' : 'bg-white border-slate-300 text-slate-500 hover:text-slate-700 hover:border-slate-400'}`} title="Editar dados financeiros">
+                <Pencil size={14} />
+              </button>
+            </div>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-end"><span className="text-slate-500 font-semibold uppercase text-xs">Valor Total</span><span className="font-bold text-slate-800 text-lg">R$ {totalValue.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span></div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2"><span className="text-slate-500 font-semibold uppercase text-xs">Entrada</span><span className="font-medium text-slate-800">R$ {downPayment.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span></div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2"><span className="text-slate-500 font-semibold uppercase text-xs">Financiado</span><span className="font-medium text-slate-800">R$ {(totalValue - downPayment).toLocaleString('pt-BR', {minimumFractionDigits:2})}</span></div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2"><span className="text-slate-500 font-semibold uppercase text-xs">Parcelamento</span><span className="font-medium text-slate-800 bg-white px-2 py-0.5 border rounded-full text-xs">{installments.length}x de R$ {parseMoney(sale.installmentValue || '0').toLocaleString('pt-BR', {minimumFractionDigits:2})}</span></div>
+              <div className="flex justify-between items-end">
+                <span className="text-slate-500 font-semibold uppercase text-xs">Valor Total</span>
+                {isEditingFinancial ? (
+                  <input value={financialData.saleValue || ''} onChange={(e) => setFinancialData({...financialData, saleValue: formatMoney(e.target.value)})} className="w-36 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
+                ) : <span className="font-bold text-slate-800 text-lg">R$ {totalValue.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
+              </div>
+              <div className="flex justify-between border-t border-slate-200/60 pt-2">
+                <span className="text-slate-500 font-semibold uppercase text-xs">Entrada</span>
+                {isEditingFinancial ? (
+                  <input value={financialData.downPayment || ''} onChange={(e) => setFinancialData({...financialData, downPayment: formatMoney(e.target.value)})} className="w-32 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
+                ) : <span className="font-medium text-slate-800">R$ {downPayment.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
+              </div>
+              <div className="flex justify-between border-t border-slate-200/60 pt-2">
+                <span className="text-slate-500 font-semibold uppercase text-xs">Financiado</span>
+                {isEditingFinancial ? (
+                  <input value={financialData.financedAmount || ''} onChange={(e) => setFinancialData({...financialData, financedAmount: formatMoney(e.target.value)})} className="w-32 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
+                ) : <span className="font-medium text-slate-800">R$ {parseMoney(sale.financedAmount || (totalValue - downPayment)).toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
+              </div>
+              <div className="flex justify-between border-t border-slate-200/60 pt-2">
+                <span className="text-slate-500 font-semibold uppercase text-xs">Parcelamento</span>
+                {isEditingFinancial ? (
+                  <div className="flex items-center gap-2">
+                    <input value={financialData.installments || ''} onChange={(e) => setFinancialData({...financialData, installments: e.target.value})} type="number" className="w-16 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
+                    <input value={financialData.installmentValue || ''} onChange={(e) => setFinancialData({...financialData, installmentValue: formatMoney(e.target.value)})} className="w-24 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
+                  </div>
+                ) : <span className="font-medium text-slate-800 bg-white px-2 py-0.5 border rounded-full text-xs">{installments.length}x de R$ {parseMoney(sale.installmentValue || '0').toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
+              </div>
+              {isEditingFinancial && <button onClick={saveFinancialDetails} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors">Salvar dados financeiros</button>}
             </div>
           </div>
         </div>
