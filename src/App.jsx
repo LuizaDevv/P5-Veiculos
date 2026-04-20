@@ -10,7 +10,7 @@ import {
   DollarSign, CheckCircle, LayoutDashboard, 
   Users, Wallet, AlertCircle, UploadCloud, TrendingUp, Activity, PieChart,
   FileText, ArrowDownToLine, Clock, AlertTriangle, Archive, FolderArchive,
-  ChevronDown, MapPin, Briefcase, IdCard, Calendar as CalendarIcon, Pencil
+  ChevronDown, MapPin, Briefcase, IdCard, Calendar as CalendarIcon, Pencil, NotebookPen, ClipboardList
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
@@ -159,7 +159,7 @@ const getContractHTML = (sale, vehicle) => {
       <p><b>COMPRADOR:</b> <u>${sale.clientName}</u>, nac. <u>Brasileiro(a)</u>, estado civil: <u>${sale.clientMaritalStatus || ''}</u>, profissão: <u>${sale.clientProfession || ''}</u>, carteira identidade: <u>${sale.clientRg || ''}</u>, CPF.: <u>${sale.clientCpf}</u>, residente e domiciliado à Rua: <u>${sale.clientStreet || ''}</u>, nº <u>${sale.clientNumber || ''}</u> Bairro: <u>${sale.clientNeighborhood || ''}</u> Cidade: <u>${sale.clientCity || ''}</u> Estado: <u>${sale.clientState || ''}</u>.<br>
       As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Compra e Venda de Veículo, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.</p>
       <div class="section-title">DO OBJETO DO CONTRATO</div>
-      <p>Cláusula 1ª. O presente contrato tem como OBJETO, o veículo <u>${vehicle.brand} ${vehicle.model}</u>, marca <u>${vehicle.brand}</u>, modelo <u>${vehicle.model}</u>, ano de fabricação <u>${vehicle.year}</u>, chassi <u>${vehicle.chassis || ''}</u>, cor <u>${vehicle.color || ''}</u>, placa <u>${vehicle.plate}</u>, RENAVAM: <u>${vehicle.renavam || ''}</u></p>
+      <p>Cláusula 1ª. O presente contrato tem como OBJETO, o veículo <u>${vehicle.brand} ${vehicle.model}</u>, marca <u>${vehicle.brand}</u>, modelo <u>${vehicle.model}</u>, ano de fabricação <u>${vehicle.year}</u>, chassi <u>${vehicle.chassis || ''}</u>, cor <u>${vehicle.color || ''}</u>, placa <u>${vehicle.plate}</u>, RENAVAM: <u>${vehicle.renavam || ''}</u>, CRV: <u>${vehicle.crv || ''}</u></p>
       <div class="section-title">DAS OBRIGAÇÕES</div>
       <p>Cláusula 2ª. O VENDEDOR se obriga a entregar ao COMPRADOR o Documento Único de Transferência (DUT), assinado e a este reconhecido firma.</p>
       <p>Cláusula 3ª. O VENDEDOR se responsabilizará pela entrega do veículo ao COMPRADOR, livre de qualquer ônus ou encargos até a data presente.</p>
@@ -216,7 +216,7 @@ const getSpreadsheetHTML = (sale, vehicle) => {
       <div class="header"><h1>VEÍCULOS</h1><h2>(31)99700-3639</h2></div>
       <p>Data da Venda: <u>${day}/${dateObj.getUTCMonth()+1 < 10 ? '0'+(dateObj.getUTCMonth()+1) : dateObj.getUTCMonth()+1}/${year}</u> &nbsp;&nbsp;&nbsp; Entrada: R$ <u>${downPayment.toLocaleString('pt-BR', {minimumFractionDigits:2})}</u></p>
       <p>Valor do veículo financiado: R$ <u>${parseMoney(sale.financedAmount).toLocaleString('pt-BR', {minimumFractionDigits:2})}</u>, dividido em <u>${installments.length}</u> parcelas de R$ <u>${parseMoney(sale.installmentValue || '0').toLocaleString('pt-BR', {minimumFractionDigits:2})}</u> ( Vencimento todo dia <u>${dueDay}</u> de cada mês )</p>
-      <p>Veículo: <u>${vehicle.brand} ${vehicle.model}</u>, marca <u>${vehicle.brand}</u>, modelo <u>${vehicle.model}</u>, ano de fabricação <u>${vehicle.year}</u>, chassi <u>${vehicle.chassis || ''}</u> cor <u>${vehicle.color || ''}</u>, placa <u>${vehicle.plate}</u>, RENAVAM: <u>${vehicle.renavam || ''}</u></p>
+      <p>Veículo: <u>${vehicle.brand} ${vehicle.model}</u>, marca <u>${vehicle.brand}</u>, modelo <u>${vehicle.model}</u>, ano de fabricação <u>${vehicle.year}</u>, chassi <u>${vehicle.chassis || ''}</u> cor <u>${vehicle.color || ''}</u>, placa <u>${vehicle.plate}</u>, RENAVAM: <u>${vehicle.renavam || ''}</u>, CRV: <u>${vehicle.crv || ''}</u></p>
       <p>Nome do Comprador: <u>${sale.clientName}</u> CPF.: <u>${sale.clientCpf}</u> Telefone: <u>${sale.clientPhone || ''}</u><br>Identidade: <u>${sale.clientRg || ''}</u> End.: <u>${address}</u></p>
       <table><thead><tr><th style="width: 8%;">Parcela</th><th style="width: 22%;">Valor da parcela</th><th style="width: 20%;">Vencimento</th><th style="width: 15%;">Status</th><th style="width: 35%;">Observações da Parcela</th></tr></thead><tbody>${rowsHtml}</tbody></table>
       <p>Betim, <u>${day}</u> de <u>${month}</u> de <u>${year}</u>.</p>
@@ -270,7 +270,7 @@ const getReportHTML = (sale, vehicle) => {
       <div class="section-title">DADOS DO CLIENTE</div>
       <p><span class="bold">Nome:</span> ${sale.clientName}</p><p><span class="bold">CPF:</span> ${sale.clientCpf}</p><p><span class="bold">Telefone:</span> ${sale.clientPhone || 'Não informado'}</p><p><span class="bold">Endereço:</span> ${address}</p>
       <div class="section-title">DADOS DO VEÍCULO</div>
-      <p><span class="bold">Veículo:</span> ${vehicle.brand} ${vehicle.model} (${vehicle.year})</p><p><span class="bold">Placa:</span> ${vehicle.plate}</p><p><span class="bold">Chassi:</span> ${vehicle.chassis || 'Não informado'}</p><p><span class="bold">Renavam:</span> ${vehicle.renavam || 'Não informado'}</p><p><span class="bold">CRLV:</span> ${vehicle.crlvNumber || 'Não informado'}</p><p><span class="bold">Cor:</span> ${vehicle.color || 'Não informado'}</p><p><span class="bold">Data da Venda:</span> ${new Date(sale.saleDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+      <p><span class="bold">Veículo:</span> ${vehicle.brand} ${vehicle.model} (${vehicle.year})</p><p><span class="bold">Placa:</span> ${vehicle.plate}</p><p><span class="bold">Chassi:</span> ${vehicle.chassis || 'Não informado'}</p><p><span class="bold">Renavam:</span> ${vehicle.renavam || 'Não informado'}</p><p><span class="bold">CRV:</span> ${vehicle.crv || 'Não informado'}</p><p><span class="bold">CRLV:</span> ${vehicle.crlvNumber || 'Não informado'}</p><p><span class="bold">Cor:</span> ${vehicle.color || 'Não informado'}</p><p><span class="bold">Data da Venda:</span> ${new Date(sale.saleDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
       <div class="section-title">DADOS DO VENDEDOR</div>
       <p><span class="bold">Nome:</span> Warlen Paz</p><p><span class="bold">CPF:</span> 003.622.956-34</p>
       <div class="section-title">RESUMO FINANCEIRO</div>
@@ -342,6 +342,8 @@ export default function App() {
   const [vehicles, setVehicles] = useState([]);
   const [sales, setSales] = useState([]);
   const [commissions, setCommissions] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [miscDocuments, setMiscDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // UI State
@@ -407,7 +409,17 @@ export default function App() {
         setCommissions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       }, (error) => console.error(error));
 
-      return () => { unsubscribeVehicles(); unsubscribeSales(); unsubscribeCommissions(); };
+      const notesRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'notes');
+      const unsubscribeNotes = onSnapshot(notesRef, (snapshot) => {
+        setNotes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }, (error) => console.error(error));
+
+      const miscDocumentsRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'misc_documents');
+      const unsubscribeMiscDocuments = onSnapshot(miscDocumentsRef, (snapshot) => {
+        setMiscDocuments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }, (error) => console.error(error));
+
+      return () => { unsubscribeVehicles(); unsubscribeSales(); unsubscribeCommissions(); unsubscribeNotes(); unsubscribeMiscDocuments(); };
     } catch(err) {
       console.log("Erro ao carregar coleções:", err);
       setLoading(false);
@@ -634,12 +646,7 @@ export default function App() {
     if (!checkConnection()) return;
     const saleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'sales', saleId);
     await updateDoc(saleRef, updates);
-
-    if (updates?.installmentsList || updates?.installments || updates?.installmentValue || updates?.firstInstallmentDate || updates?.financedAmount || updates?.saleValue || updates?.downPayment) {
-      setAlertMessage("✅ Dados financeiros atualizados com sucesso.");
-    } else {
-      setAlertMessage("✅ Dados do cliente atualizados com sucesso.");
-    }
+    setAlertMessage("✅ Dados do cliente atualizados com sucesso.");
   };
 
   const handleUpdateVehicleDetails = async (vehicleId, updates) => {
@@ -647,6 +654,108 @@ export default function App() {
     const vehicleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles', vehicleId);
     await updateDoc(vehicleRef, updates);
     setAlertMessage("✅ Dados do veículo atualizados com sucesso.");
+  };
+
+  const uploadCloudinaryFiles = async (files) => {
+    const cloudName = "duzumcv9c";
+    const uploadPreset = "meu_app_carros";
+    return await Promise.all(
+      files.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: "POST",
+          body: formData
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        return { name: file.name, path: data.secure_url };
+      })
+    );
+  };
+
+  const handleSaveNote = async (noteData) => {
+    if (!checkConnection()) return;
+    try {
+      const notesRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'notes');
+      const payload = {
+        title: noteData.title || '',
+        content: noteData.content || '',
+        done: !!noteData.done,
+        updated_at: new Date().toISOString()
+      };
+      if (noteData.id) {
+        await updateDoc(doc(db, 'artifacts', appId, 'users', 'loja_global', 'notes', noteData.id), payload);
+      } else {
+        await addDoc(notesRef, { ...payload, created_at: new Date().toISOString() });
+      }
+      setAlertMessage('✅ Anotação salva com sucesso.');
+    } catch (error) {
+      console.error('Error saving note:', error);
+      setAlertMessage('❌ Não foi possível salvar a anotação.');
+    }
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    if (!checkConnection()) return;
+    setConfirmAction({
+      isOpen: true,
+      message: 'Tem certeza que deseja excluir esta anotação?',
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, 'artifacts', appId, 'users', 'loja_global', 'notes', noteId));
+        } catch (error) {
+          console.error('Error deleting note:', error);
+        }
+      }
+    });
+  };
+
+  const handleToggleNoteDone = async (noteId, currentDone) => {
+    if (!checkConnection()) return;
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'users', 'loja_global', 'notes', noteId), {
+        done: !currentDone,
+        updated_at: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error toggling note:', error);
+    }
+  };
+
+  const handleUploadMiscDocuments = async (files, description = '') => {
+    if (!checkConnection()) return;
+    try {
+      const selectedFiles = Array.from(files || []);
+      if (!selectedFiles.length) return;
+      const uploadedDocs = await uploadCloudinaryFiles(selectedFiles);
+      const miscDocsRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'misc_documents');
+      await Promise.all(uploadedDocs.map((uploadedDoc) => addDoc(miscDocsRef, {
+        ...uploadedDoc,
+        description,
+        created_at: new Date().toISOString()
+      })));
+      setAlertMessage('✅ Documento(s) diversos anexado(s) com sucesso.');
+    } catch (error) {
+      console.error('Error uploading misc documents:', error);
+      setAlertMessage('❌ Não foi possível anexar os documentos diversos.');
+    }
+  };
+
+  const handleDeleteMiscDocument = async (docId) => {
+    if (!checkConnection()) return;
+    setConfirmAction({
+      isOpen: true,
+      message: 'Tem certeza que deseja excluir este documento diverso?',
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, 'artifacts', appId, 'users', 'loja_global', 'misc_documents', docId));
+        } catch (error) {
+          console.error('Error deleting misc document:', error);
+        }
+      }
+    });
   };
 
   const handleQuickSaleFromClient = (client) => {
@@ -713,6 +822,8 @@ export default function App() {
           <div className="pt-4 pb-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gestão</div>
           <SidebarItem icon={<Users size={20}/>} label="Clientes" active={activeTab === 'clients'} onClick={() => {setActiveTab('clients'); setSearchQuery(''); setActiveFilter({year:'', type:''}); setIsMobileMenuOpen(false);}} />
           <SidebarItem icon={<Wallet size={20}/>} label="Controle Financeiro" active={activeTab === 'finance'} onClick={() => {setActiveTab('finance'); setIsMobileMenuOpen(false);}} />
+          <SidebarItem icon={<NotebookPen size={20}/>} label="Anotações" active={activeTab === 'notes'} onClick={() => {setActiveTab('notes'); setSearchQuery(''); setIsMobileMenuOpen(false);}} />
+          <SidebarItem icon={<ClipboardList size={20}/>} label="Documentos Diversos" active={activeTab === 'misc-docs'} onClick={() => {setActiveTab('misc-docs'); setSearchQuery(''); setIsMobileMenuOpen(false);}} />
           <SidebarItem icon={<DollarSign size={20}/>} label="Comissões" active={activeTab === 'commissions'} onClick={() => {setActiveTab('commissions'); setIsMobileMenuOpen(false);}} />
           
           <div className="pt-4 pb-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Histórico</div>
@@ -735,6 +846,8 @@ export default function App() {
                 {activeTab === 'clients' && 'Meus Clientes'}
                 {activeTab === 'finance' && 'Controle Financeiro'}
                 {activeTab === 'commissions' && 'Comissões de Vendas'}
+                {activeTab === 'notes' && 'Anotações'}
+                {activeTab === 'misc-docs' && 'Documentos Diversos'}
                 {activeTab === 'archive' && 'Arquivo Morto (Quitados)'}
               </h2>
               <p className="text-xs md:text-sm text-slate-500 mt-1">
@@ -745,6 +858,8 @@ export default function App() {
                 {activeTab === 'clients' && 'Lista de clientes e histórico completo de documentos.'}
                 {activeTab === 'finance' && 'Acompanhe os valores de entrada e financiamentos.'}
                 {activeTab === 'commissions' && 'Gerencie as comissões geradas pelas vendas.'}
+                {activeTab === 'notes' && 'Use como bloco de notas rápido para a operação do dia a dia.'}
+                {activeTab === 'misc-docs' && 'Guarde arquivos gerais que não pertencem a um cliente ou veículo específico.'}
                 {activeTab === 'archive' && 'Histórico de todos os contratos já finalizados e pagos.'}
               </p>
             </div>
@@ -859,6 +974,8 @@ export default function App() {
         
         {activeTab === 'clients' && <ClientsView sales={sales} searchQuery={searchQuery} onShowAlert={setAlertMessage} onQuickSell={handleQuickSaleFromClient} />}
         {activeTab === 'finance' && <FinanceView sales={sales.filter(s => s.paymentStatus !== 'quitado')} />}
+        {activeTab === 'notes' && <NotesView notes={notes} searchQuery={searchQuery} onSaveNote={handleSaveNote} onDeleteNote={handleDeleteNote} onToggleDone={handleToggleNoteDone} />}
+        {activeTab === 'misc-docs' && <MiscDocumentsView documents={miscDocuments} searchQuery={searchQuery} onUploadDocuments={handleUploadMiscDocuments} onDeleteDocument={handleDeleteMiscDocument} />}
         {activeTab === 'commissions' && <CommissionsView commissions={commissions} onToggleStatus={handleToggleCommission} onDelete={handleDeleteCommission} />}
         {activeTab === 'archive' && <ArchiveView sales={filteredSales} vehicles={vehicles} onSaleClick={(saleId) => setSelectedSaleId(saleId)} onDeleteSale={handleDeleteSale} />}
 
@@ -1024,12 +1141,12 @@ const EmptyState = ({ message }) => (
 const VehicleFormModal = ({ isOpen, onClose, onSave, initialData }) => {
   const [formData, setFormData] = useState({
     type: 'carro', brand: '', model: '', year: '', plate: '', 
-    color: '', price: '', renavam: '', chassis: '', crlvNumber: '', notes: '', documents: []
+    color: '', price: '', renavam: '', crv: '', chassis: '', crlvNumber: '', notes: '', documents: []
   });
 
   useEffect(() => {
     if (initialData) setFormData(initialData);
-    else setFormData({ type: 'carro', brand: '', model: '', year: '', plate: '', color: '', price: '', renavam: '', chassis: '', crlvNumber: '', notes: '', documents: [] });
+    else setFormData({ type: 'carro', brand: '', model: '', year: '', plate: '', color: '', price: '', renavam: '', crv: '', chassis: '', crlvNumber: '', notes: '', documents: [] });
   }, [initialData, isOpen]);
 
   const handleChange = (e) => {
@@ -1121,6 +1238,7 @@ const handleFileUpload = async (e) => {
           <Input label="Cor" name="color" value={formData.color} onChange={handleChange} />
           <Input label="Preço (R$)" name="price" type="text" value={formData.price} onChange={handleChange} placeholder="0,00" />
           <Input label="Renavam" name="renavam" value={formData.renavam} onChange={handleChange} />
+          <Input label="CRV" name="crv" value={formData.crv || ''} onChange={handleChange} />
           <Input label="Chassi" name="chassis" value={formData.chassis} onChange={handleChange} />
           
           <div className="col-span-full mt-2">
@@ -1195,7 +1313,8 @@ const ViewVehicleModal = ({ isOpen, onClose, vehicle, onEdit, onSell, onDelete }
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <div><span className="block text-xs text-slate-400 uppercase font-semibold mb-1">Cor</span><span className="font-medium text-slate-700">{vehicle.color || '---'}</span></div>
           <div><span className="block text-xs text-slate-400 uppercase font-semibold mb-1">Renavam</span><span className="font-medium text-slate-700">{vehicle.renavam || '---'}</span></div>
-          <div className="col-span-2"><span className="block text-xs text-slate-400 uppercase font-semibold mb-1">Chassi</span><span className="font-medium text-slate-700">{vehicle.chassis || '---'}</span></div>
+          <div><span className="block text-xs text-slate-400 uppercase font-semibold mb-1">CRV</span><span className="font-medium text-slate-700">{vehicle.crv || '---'}</span></div>
+          <div className="col-span-2 sm:col-span-1"><span className="block text-xs text-slate-400 uppercase font-semibold mb-1">Chassi</span><span className="font-medium text-slate-700 break-all">{vehicle.chassis || '---'}</span></div>
         </div>
 
         {vehicle.documents && vehicle.documents.length > 0 && (
@@ -1590,6 +1709,7 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
       plate: vehicle.plate || '',
       color: vehicle.color || '',
       renavam: vehicle.renavam || '',
+      crv: vehicle.crv || '',
       chassis: vehicle.chassis || ''
     });
     setFinancialData({
@@ -1622,21 +1742,21 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
 
     const totalValueNum = parseMoney(financialData.saleValue || sale.saleValue || '0');
     const downPaymentNum = parseMoney(financialData.downPayment || sale.downPayment || '0');
-    const typedFinancedAmountNum = parseMoney(financialData.financedAmount || '0');
+    const financedAmountNum = parseMoney(financialData.financedAmount || '0');
     const installmentsCount = Math.max(parseInt(financialData.installments || 0, 10) || 0, 0);
     const installmentValueNum = parseMoney(financialData.installmentValue || sale.installmentValue || '0');
-    const fallbackFirstDate = sale.firstInstallmentDate || sale.installmentsList?.[0]?.dueDate || '';
-    const firstDate = financialData.firstInstallmentDate || fallbackFirstDate;
+    const firstDate = financialData.firstInstallmentDate || sale.firstInstallmentDate || '';
 
-    const resolvedFinancedAmount = typedFinancedAmountNum > 0
-      ? typedFinancedAmountNum
+    const resolvedFinancedAmount = financedAmountNum > 0
+      ? financedAmountNum
       : Math.max(totalValueNum - downPaymentNum, 0);
 
-    const existingInstallments = Array.isArray(sale.installmentsList) ? sale.installmentsList : [];
     let updatedInstallmentsList = [];
 
-    if (installmentsCount > 0 && firstDate) {
-      let currentDate = new Date(firstDate + 'T00:00:00');
+    if (installmentsCount > 0 && firstDate && installmentValueNum > 0) {
+      const existingInstallments = sale.installmentsList || [];
+      let currentDate = new Date(firstDate);
+      currentDate = new Date(currentDate.getTime() + currentDate.getTimezoneOffset() * 60000);
 
       updatedInstallmentsList = Array.from({ length: installmentsCount }, (_, index) => {
         const existing = existingInstallments[index];
@@ -1648,13 +1768,12 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
           status: existing?.status || 'pendente',
           observation: existing?.observation || ''
         };
-
         currentDate.setMonth(currentDate.getMonth() + 1);
         return item;
       });
     }
 
-    const payload = {
+    await onUpdateSale(sale.id, {
       saleValue: totalValueNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       downPayment: downPaymentNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       financedAmount: resolvedFinancedAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -1662,10 +1781,8 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
       installmentValue: installmentValueNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       firstInstallmentDate: firstDate,
       installmentsList: updatedInstallmentsList
-    };
+    });
 
-    await onUpdateSale(sale.id, payload);
-    setFinancialData(payload);
     setIsEditingFinancial(false);
   };
 
@@ -1826,8 +1943,9 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
                 <div><span className="block text-xs text-slate-500 font-semibold uppercase">Placa / Ano</span>{isEditingVehicle ? <div className="flex gap-2"><input value={vehicleData.plate || ''} onChange={(e) => setVehicleData({...vehicleData, plate: e.target.value})} placeholder="Placa" className="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono" /><input value={vehicleData.year || ''} onChange={(e) => setVehicleData({...vehicleData, year: e.target.value})} placeholder="Ano" className="w-full border border-slate-300 rounded-lg p-2 text-sm" /></div> : <><span className="font-medium text-slate-800 font-mono bg-white px-1 border rounded">{vehicle.plate}</span> <span className="text-slate-600">({vehicle.year})</span></>}</div>
                 <div><span className="block text-xs text-slate-500 font-semibold uppercase">Cor</span>{isEditingVehicle ? <input value={vehicleData.color || ''} onChange={(e) => setVehicleData({...vehicleData, color: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{vehicle.color || '---'}</span>}</div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div><span className="block text-xs text-slate-500 font-semibold uppercase">Renavam</span>{isEditingVehicle ? <input value={vehicleData.renavam || ''} onChange={(e) => setVehicleData({...vehicleData, renavam: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{vehicle.renavam || '---'}</span>}</div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">CRV</span>{isEditingVehicle ? <input value={vehicleData.crv || ''} onChange={(e) => setVehicleData({...vehicleData, crv: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{vehicle.crv || '---'}</span>}</div>
                 <div><span className="block text-xs text-slate-500 font-semibold uppercase">Chassi</span>{isEditingVehicle ? <input value={vehicleData.chassis || ''} onChange={(e) => setVehicleData({...vehicleData, chassis: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800 truncate block">{vehicle.chassis || '---'}</span>}</div>
               </div>
               {isEditingVehicle && <button onClick={saveVehicleDetails} className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors">Salvar dados do veículo</button>}
@@ -1842,32 +1960,32 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
               </button>
             </div>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-end">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <span className="text-slate-500 font-semibold uppercase text-xs">Valor Total</span>
                 {isEditingFinancial ? (
                   <input value={financialData.saleValue || ''} onChange={(e) => setFinancialData({...financialData, saleValue: formatMoney(e.target.value)})} className="w-36 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
                 ) : <span className="font-bold text-slate-800 text-lg">R$ {totalValue.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
               </div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2">
+              <div className="flex flex-col gap-1 border-t border-slate-200/60 pt-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-slate-500 font-semibold uppercase text-xs">Entrada</span>
                 {isEditingFinancial ? (
                   <input value={financialData.downPayment || ''} onChange={(e) => setFinancialData({...financialData, downPayment: formatMoney(e.target.value)})} className="w-32 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
                 ) : <span className="font-medium text-slate-800">R$ {downPayment.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
               </div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2">
+              <div className="flex flex-col gap-1 border-t border-slate-200/60 pt-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-slate-500 font-semibold uppercase text-xs">Financiado</span>
                 {isEditingFinancial ? (
                   <input value={financialData.financedAmount || ''} onChange={(e) => setFinancialData({...financialData, financedAmount: formatMoney(e.target.value)})} className="w-32 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
                 ) : <span className="font-medium text-slate-800">R$ {parseMoney(sale.financedAmount || (totalValue - downPayment)).toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
               </div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2">
+              <div className="flex flex-col gap-2 border-t border-slate-200/60 pt-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-slate-500 font-semibold uppercase text-xs">Parcelamento</span>
                 {isEditingFinancial ? (
-                  <div className="flex items-center gap-2">
-                    <input value={financialData.installments || ''} onChange={(e) => setFinancialData({...financialData, installments: e.target.value})} type="number" className="w-16 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
-                    <input value={financialData.installmentValue || ''} onChange={(e) => setFinancialData({...financialData, installmentValue: formatMoney(e.target.value)})} className="w-24 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                    <input value={financialData.installments || ''} onChange={(e) => setFinancialData({...financialData, installments: e.target.value})} type="number" className="w-full sm:w-16 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
+                    <input value={financialData.installmentValue || ''} onChange={(e) => setFinancialData({...financialData, installmentValue: formatMoney(e.target.value)})} className="w-full sm:w-24 border border-slate-300 rounded-lg p-2 text-sm text-right font-semibold" />
                   </div>
-                ) : <span className="font-medium text-slate-800 bg-white px-2 py-0.5 border rounded-full text-xs">{installments.length}x de R$ {parseMoney(sale.installmentValue || '0').toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
+                ) : <span className="font-medium text-slate-800 bg-white px-2 py-1 border rounded-full text-xs inline-flex items-center self-start sm:self-auto max-w-full break-words">{installments.length}x de R$ {parseMoney(sale.installmentValue || '0').toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>}
               </div>
               {isEditingFinancial && <button onClick={saveFinancialDetails} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors">Salvar dados financeiros</button>}
             </div>
@@ -1887,31 +2005,31 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
               <input type="file" multiple className="hidden" onChange={handleAppendClientDocuments} />
             </label>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {vehicle.documents?.map((doc, i) => (
-              <div key={'v'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm hover:border-blue-400 hover:shadow-md transition-all group">
+              <div key={'v'+i} className="grid grid-cols-[auto,minmax(0,1fr),auto,auto] items-center gap-2 sm:gap-3 bg-white border border-slate-200 px-3 py-3 rounded-xl text-sm hover:border-blue-400 hover:shadow-md transition-all group min-w-0 overflow-hidden">
                 <div className="bg-blue-100 p-1.5 rounded text-blue-600 group-hover:bg-blue-50 transition-colors"><FileText size={16} /></div>
-                <button onClick={() => handleDownloadDocument(doc)} className="font-medium text-slate-700 group-hover:text-blue-700 text-left flex-1 truncate">
+                <button onClick={() => handleDownloadDocument(doc)} className="font-medium text-slate-700 group-hover:text-blue-700 text-left min-w-0 break-all leading-tight">
                   {doc?.name || doc}
                 </button>
-                <button onClick={() => handleDownloadDocument(doc)} className="text-slate-400 hover:text-blue-600 ml-2 p-1 rounded">
+                <button onClick={() => handleDownloadDocument(doc)} className="text-slate-400 hover:text-blue-600 p-1 rounded shrink-0">
                   <ArrowDownToLine size={16} />
                 </button>
-                <button onClick={() => handleRemoveVehicleDocument(i)} className="text-slate-400 hover:text-red-600 ml-1 p-1 rounded">
+                <button onClick={() => handleRemoveVehicleDocument(i)} className="text-slate-400 hover:text-red-600 p-1 rounded shrink-0">
                   <Trash2 size={16} />
                 </button>
               </div>
             ))}
             {sale.clientDocuments?.map((doc, i) => (
-              <div key={'c'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm hover:border-indigo-400 hover:shadow-md transition-all group">
+              <div key={'c'+i} className="grid grid-cols-[auto,minmax(0,1fr),auto,auto] items-center gap-2 sm:gap-3 bg-white border border-slate-200 px-3 py-3 rounded-xl text-sm hover:border-indigo-400 hover:shadow-md transition-all group min-w-0 overflow-hidden">
                 <div className="bg-indigo-100 p-1.5 rounded text-indigo-600 group-hover:bg-indigo-50 transition-colors"><IdCard size={16} /></div>
-                <button onClick={() => handleDownloadDocument(doc)} className="font-medium text-slate-700 group-hover:text-indigo-700 text-left flex-1 truncate">
+                <button onClick={() => handleDownloadDocument(doc)} className="font-medium text-slate-700 group-hover:text-indigo-700 text-left min-w-0 break-all leading-tight">
                   {doc?.name || doc}
                 </button>
                 <button onClick={() => handleDownloadDocument(doc)} className="text-slate-400 hover:text-indigo-600 ml-2 p-1 rounded">
                   <ArrowDownToLine size={16} />
                 </button>
-                <button onClick={() => handleRemoveClientDocument(i)} className="text-slate-400 hover:text-red-600 ml-1 p-1 rounded">
+                <button onClick={() => handleRemoveClientDocument(i)} className="text-slate-400 hover:text-red-600 p-1 rounded shrink-0">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -1925,21 +2043,21 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
         </div>
 
         {/* PROGRESS BAR */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-end mb-2">
-            <div><span className="text-slate-500 font-bold uppercase text-xs tracking-wider">Evolução do Pagamento</span><div className="text-sm text-slate-600 font-medium mt-1">{paidCount} de {installments.length} parcelas pagas</div></div>
-            <span className="font-bold text-blue-600 text-2xl">{Math.round(progressPercent)}%</span>
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-2">
+            <div className="min-w-0"><span className="text-slate-500 font-bold uppercase text-xs tracking-wider">Evolução do Pagamento</span><div className="text-sm text-slate-600 font-medium mt-1 break-words">{paidCount} de {installments.length} parcelas pagas</div></div>
+            <span className="font-bold text-blue-600 text-2xl sm:text-3xl self-start sm:self-auto shrink-0">{Math.round(progressPercent)}%</span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-4 mb-6 overflow-hidden border border-slate-200/60 shadow-inner">
             <div className="bg-gradient-to-r from-blue-500 to-emerald-400 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${progressPercent}%` }}></div>
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex items-center justify-between">
-              <div><span className="block text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Total Já Recebido</span><div className="text-xl sm:text-2xl font-bold text-emerald-600 whitespace-nowrap">R$ {totalPaid.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex items-start justify-between gap-3 min-w-0">
+              <div className="min-w-0"><span className="block text-slate-400 text-xs uppercase font-bold tracking-wider mb-1 break-words">Total Já Recebido</span><div className="text-xl sm:text-2xl font-bold text-emerald-600 break-words leading-tight">R$ {totalPaid.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
               <CheckCircle size={32} className="text-emerald-100 hidden sm:block"/>
             </div>
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex items-center justify-between">
-              <div><span className="block text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Saldo Devedor Restante</span><div className="text-xl sm:text-2xl font-bold text-orange-600 whitespace-nowrap">R$ {remainingValue > 0 ? remainingValue.toLocaleString('pt-BR', {minimumFractionDigits:2}) : '0,00'}</div></div>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex items-start justify-between gap-3 min-w-0">
+              <div className="min-w-0"><span className="block text-slate-400 text-xs uppercase font-bold tracking-wider mb-1 break-words">Saldo Devedor Restante</span><div className="text-xl sm:text-2xl font-bold text-orange-600 break-words leading-tight">R$ {remainingValue > 0 ? remainingValue.toLocaleString('pt-BR', {minimumFractionDigits:2}) : '0,00'}</div></div>
               <AlertCircle size={32} className="text-orange-100 hidden sm:block"/>
             </div>
           </div>
@@ -2083,6 +2201,7 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
     const searchMatch = 
       (v?.model||'').toLowerCase().includes(searchLower) || 
       (v?.plate||'').toLowerCase().includes(searchLower) || 
+      (v?.crv||'').toLowerCase().includes(searchLower) || 
       (s?.clientName||'').toLowerCase().includes(searchLower) || 
       (s?.clientCpf||'').includes(searchLower);
 
@@ -2108,7 +2227,8 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
         <div key={idx} className="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden min-w-0">
           <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Estoque</div>
           <div className="font-bold text-slate-800 text-lg mb-1 mt-2 line-clamp-2 break-words min-w-0">{v.brand} {v.model}</div>
-          <div className="font-mono text-sm text-slate-500 mb-4 break-all">{v.plate} • {v.year}</div>
+          <div className="font-mono text-sm text-slate-500 mb-2 break-all">{v.plate} • {v.year}</div>
+          <div className="text-xs text-slate-500 mb-4 break-all">CRV: {v.crv || '---'}</div>
           <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-4">
             <span className="font-bold text-blue-600">R$ {parseMoney(v.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             <div className="flex gap-2 items-center">
@@ -2158,7 +2278,8 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDelete
             {v ? `${v.brand} ${v.model}` : 'Veículo Removido'}
           </div>
 
-          <div className="font-mono text-sm text-slate-400 mb-3 break-all">{v?.plate}</div>
+          <div className="font-mono text-sm text-slate-400 mb-1 break-all">{v?.plate}</div>
+          <div className="text-xs text-slate-500 mb-3 break-all">CRV: {v?.crv || '---'}</div>
 
           <div className="flex flex-col gap-1 text-sm text-slate-700 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100 min-w-0">
             <span className="font-bold flex items-start gap-1.5 min-w-0"><Users size={14} className="text-slate-400 shrink-0 mt-0.5" /> <span className="break-words min-w-0">{s.clientName}</span></span>
@@ -2541,6 +2662,157 @@ const ArchiveView = ({ sales, vehicles, onSaleClick, onDeleteSale }) => {
           </table>
         </div>
       </div>
+    </div>
+  );
+};
+
+const formatDateTimeLabel = (value) => {
+  if (!value) return 'Sem data';
+  return new Date(value).toLocaleString('pt-BR');
+};
+
+const NotesView = ({ notes, searchQuery, onSaveNote, onDeleteNote, onToggleDone }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState(null);
+
+  const filteredNotes = [...notes]
+    .filter((note) => {
+      const q = (searchQuery || '').toLowerCase();
+      return !q || (note.title || '').toLowerCase().includes(q) || (note.content || '').toLowerCase().includes(q);
+    })
+    .sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0));
+
+  return (
+    <div className="flex-1 overflow-auto p-5 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+          <h3 className="text-lg font-bold text-slate-800">Bloco de notas</h3>
+          <p className="text-sm text-slate-500">Crie observações rápidas, marque como feito e volte depois quando precisar.</p>
+        </div>
+        <button onClick={() => { setSelectedNote(null); setIsModalOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors">
+          <Plus size={18} /> Nova anotação
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {filteredNotes.map((note) => (
+          <div key={note.id} className={`bg-white border rounded-2xl p-5 shadow-sm transition-all ${note.done ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h4 className={`font-bold text-base break-words ${note.done ? 'text-emerald-700 line-through' : 'text-slate-800'}`}>{note.title || 'Sem título'}</h4>
+                <p className="text-xs text-slate-500 mt-1">Anotado em {formatDateTimeLabel(note.created_at)}</p>
+                {note.updated_at && note.updated_at !== note.created_at && <p className="text-xs text-slate-400 mt-1">Última edição: {formatDateTimeLabel(note.updated_at)}</p>}
+              </div>
+              <button onClick={() => onToggleDone(note.id, !!note.done)} className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border ${note.done ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                {note.done ? 'Feito' : 'Pendente'}
+              </button>
+            </div>
+
+            <p className="text-sm text-slate-600 mt-4 whitespace-pre-wrap break-words leading-6">{note.content || 'Sem conteúdo.'}</p>
+
+            <div className="flex flex-col sm:flex-row gap-2 mt-5">
+              <button onClick={() => { setSelectedNote(note); setIsModalOpen(true); }} className="flex-1 py-2.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold flex items-center justify-center gap-2">
+                <Pencil size={16} /> Editar
+              </button>
+              <button onClick={() => onDeleteNote(note.id)} className="flex-1 py-2.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 font-semibold flex items-center justify-center gap-2">
+                <Trash2 size={16} /> Excluir
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filteredNotes.length === 0 && (
+        <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center text-slate-500">
+          Nenhuma anotação encontrada.
+        </div>
+      )}
+
+      <NoteModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} initialData={selectedNote} onSave={async (data) => { await onSaveNote(data); setIsModalOpen(false); }} />
+    </div>
+  );
+};
+
+const NoteModal = ({ isOpen, onClose, initialData, onSave }) => {
+  const [formData, setFormData] = useState({ title: '', content: '', done: false });
+
+  useEffect(() => {
+    setFormData({
+      id: initialData?.id,
+      title: initialData?.title || '',
+      content: initialData?.content || '',
+      done: !!initialData?.done
+    });
+  }, [initialData, isOpen]);
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={initialData ? 'Editar anotação' : 'Nova anotação'} maxWidth="max-w-2xl">
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Título</label>
+          <input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full border border-slate-300 rounded-xl p-3 text-sm" placeholder="Ex: Cobrar assinatura da promissória" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Anotação</label>
+          <textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} className="w-full min-h-[220px] border border-slate-300 rounded-xl p-3 text-sm resize-y" placeholder="Escreva livremente aqui..." />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-slate-700 font-medium">
+          <input type="checkbox" checked={!!formData.done} onChange={(e) => setFormData({ ...formData, done: e.target.checked })} /> Marcar como feito
+        </label>
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50">Cancelar</button>
+          <button onClick={() => onSave(formData)} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">Salvar anotação</button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+const MiscDocumentsView = ({ documents, searchQuery, onUploadDocuments, onDeleteDocument }) => {
+  const [description, setDescription] = useState('');
+  const filteredDocs = [...documents]
+    .filter((doc) => {
+      const q = (searchQuery || '').toLowerCase();
+      return !q || (doc.name || '').toLowerCase().includes(q) || (doc.description || '').toLowerCase().includes(q);
+    })
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+  return (
+    <div className="flex-1 overflow-auto p-5 md:p-8">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6">
+        <div className="flex items-start gap-3 mb-4">
+          <ClipboardList size={20} className="text-blue-600 mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">Arquivos gerais</h3>
+            <p className="text-sm text-slate-500">Para documentos que não pertencem a um cliente ou veículo específico.</p>
+          </div>
+        </div>
+        <input value={description} onChange={(e) => setDescription(e.target.value)} className="w-full border border-slate-300 rounded-xl p-3 text-sm mb-3" placeholder="Descrição opcional do lote enviado" />
+        <label className="w-full cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors text-center block">
+          + Anexar documentos diversos
+          <input type="file" multiple className="hidden" onChange={async (e) => { await onUploadDocuments(e.target.files, description); e.target.value = ''; setDescription(''); }} />
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+        {filteredDocs.map((docItem) => (
+          <div key={docItem.id} className="grid grid-cols-[auto,minmax(0,1fr),auto,auto] items-center gap-2 sm:gap-3 bg-white border border-slate-200 px-3 py-3 rounded-xl text-sm shadow-sm min-w-0">
+            <div className="bg-blue-100 p-2 rounded text-blue-600"><FileText size={16} /></div>
+            <div className="min-w-0">
+              <button onClick={() => handleDownloadDocument(docItem)} className="font-medium text-slate-700 text-left min-w-0 break-all leading-tight">{docItem.name || 'Documento'}</button>
+              <div className="text-xs text-slate-500 mt-1 break-words">{docItem.description || 'Sem descrição'} • {new Date(docItem.created_at).toLocaleDateString('pt-BR')}</div>
+            </div>
+            <button onClick={() => handleDownloadDocument(docItem)} className="text-slate-400 hover:text-blue-600 p-1 rounded shrink-0"><ArrowDownToLine size={16} /></button>
+            <button onClick={() => onDeleteDocument(docItem.id)} className="text-slate-400 hover:text-red-600 p-1 rounded shrink-0"><Trash2 size={16} /></button>
+          </div>
+        ))}
+      </div>
+
+      {filteredDocs.length === 0 && (
+        <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center text-slate-500">
+          Nenhum documento diverso encontrado.
+        </div>
+      )}
     </div>
   );
 };
