@@ -895,6 +895,7 @@ export default function App() {
           onUpdateSale={handleUpdateSaleDetails}
           onUpdateVehicle={handleUpdateVehicleDetails}
           onPrint={handlePrint}
+          onShowAlert={setAlertMessage}
         />
       )}
 
@@ -1539,7 +1540,7 @@ const ManualCommissionModal = ({ isOpen, onClose, onSave }) => {
   );
 };
 
-const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallment, onUpdateSale, onUpdateVehicle, onPrint }) => {
+const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallment, onUpdateSale, onUpdateVehicle, onPrint, onShowAlert }) => {
   const totalValue = parseMoney(sale?.saleValue || '0');
   const downPayment = parseMoney(sale?.downPayment || '0');
   const installments = sale?.installmentsList || [];
@@ -1615,6 +1616,82 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
     if (!sale?.id) return;
     await onUpdateSale(sale.id, financialData);
     setIsEditingFinancial(false);
+  };
+
+  const uploadCloudinaryFiles = async (files) => {
+    const cloudName = "duzumcv9c";
+    const uploadPreset = "meu_app_carros";
+    const uploadedDocs = await Promise.all(
+      files.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: "POST",
+          body: formData
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        return { name: file.name, path: data.secure_url };
+      })
+    );
+    return uploadedDocs;
+  };
+
+  const handleAppendVehicleDocuments = async (e) => {
+    try {
+      const selectedFiles = Array.from(e.target.files || []);
+      if (!selectedFiles.length || !vehicle?.id) return;
+      const uploadedDocs = await uploadCloudinaryFiles(selectedFiles);
+      await onUpdateVehicle(vehicle.id, { documents: [...(vehicle.documents || []), ...uploadedDocs] });
+      if (onShowAlert) onShowAlert("✅ Documentos do veículo anexados com sucesso.");
+      e.target.value = '';
+    } catch (error) {
+      console.error("Erro ao anexar documento do veículo:", error);
+      if (onShowAlert) onShowAlert("❌ Não foi possível anexar documento do veículo.");
+    }
+  };
+
+  const handleAppendClientDocuments = async (e) => {
+    try {
+      const selectedFiles = Array.from(e.target.files || []);
+      if (!selectedFiles.length || !sale?.id) return;
+      const uploadedDocs = await uploadCloudinaryFiles(selectedFiles);
+      await onUpdateSale(sale.id, { clientDocuments: [...(sale.clientDocuments || []), ...uploadedDocs] });
+      if (onShowAlert) onShowAlert("✅ Documentos do cliente anexados com sucesso.");
+      e.target.value = '';
+    } catch (error) {
+      console.error("Erro ao anexar documento do cliente:", error);
+      if (onShowAlert) onShowAlert("❌ Não foi possível anexar documento do cliente.");
+    }
+  };
+
+  const handleRemoveVehicleDocument = async (indexToRemove) => {
+    if (!vehicle?.id) return;
+    const shouldDelete = window.confirm("Remover este documento do veículo?");
+    if (!shouldDelete) return;
+    try {
+      const updatedDocs = (vehicle.documents || []).filter((_, index) => index !== indexToRemove);
+      await onUpdateVehicle(vehicle.id, { documents: updatedDocs });
+      if (onShowAlert) onShowAlert("✅ Documento do veículo removido.");
+    } catch (error) {
+      console.error("Erro ao remover documento do veículo:", error);
+      if (onShowAlert) onShowAlert("❌ Não foi possível remover o documento do veículo.");
+    }
+  };
+
+  const handleRemoveClientDocument = async (indexToRemove) => {
+    if (!sale?.id) return;
+    const shouldDelete = window.confirm("Remover este documento do cliente?");
+    if (!shouldDelete) return;
+    try {
+      const updatedDocs = (sale.clientDocuments || []).filter((_, index) => index !== indexToRemove);
+      await onUpdateSale(sale.id, { clientDocuments: updatedDocs });
+      if (onShowAlert) onShowAlert("✅ Documento do cliente removido.");
+    } catch (error) {
+      console.error("Erro ao remover documento do cliente:", error);
+      if (onShowAlert) onShowAlert("❌ Não foi possível remover o documento do cliente.");
+    }
   };
 
   if (!sale) return null;
@@ -1747,27 +1824,54 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
         </div>
 
         {/* DOCUMENTS SECTION */}
-        {(sale.clientDocuments?.length > 0 || vehicle.documents?.length > 0) && (
-          <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 shadow-sm">
-             <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-3"><FolderArchive size={18} className="text-blue-600"/> Documentos Anexados (Veículo e Cliente)</h4>
-             <div className="flex flex-wrap gap-3">
-               {vehicle.documents?.map((doc, i) => (
-                 <div key={'v'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group" onClick={() => handleDownloadDocument(doc)}>
-                   <div className="bg-blue-100 p-1.5 rounded text-blue-600 group-hover:bg-blue-50 transition-colors"><FileText size={16} /></div>
-                   <span className="font-medium text-slate-700 group-hover:text-blue-700">{doc?.name || doc}</span>
-                   <ArrowDownToLine size={16} className="text-slate-400 group-hover:text-blue-600 ml-2" />
-                 </div>
-               ))}
-               {sale.clientDocuments?.map((doc, i) => (
-                 <div key={'c'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group" onClick={() => handleDownloadDocument(doc)}>
-                   <div className="bg-indigo-100 p-1.5 rounded text-indigo-600 group-hover:bg-indigo-50 transition-colors"><IdCard size={16} /></div>
-                   <span className="font-medium text-slate-700 group-hover:text-indigo-700">{doc?.name || doc}</span>
-                   <ArrowDownToLine size={16} className="text-slate-400 group-hover:text-indigo-600 ml-2" />
-                 </div>
-               ))}
-             </div>
+        <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 shadow-sm">
+          <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-3"><FolderArchive size={18} className="text-blue-600"/> Documentos Anexados (Veículo e Cliente)</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <label className="w-full cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-bold transition-colors text-center">
+              + Anexar Documento do Veículo
+              <input type="file" multiple className="hidden" onChange={handleAppendVehicleDocuments} />
+            </label>
+            <label className="w-full cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg text-sm font-bold transition-colors text-center">
+              + Anexar Documento do Cliente
+              <input type="file" multiple className="hidden" onChange={handleAppendClientDocuments} />
+            </label>
           </div>
-        )}
+          <div className="flex flex-wrap gap-3">
+            {vehicle.documents?.map((doc, i) => (
+              <div key={'v'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm hover:border-blue-400 hover:shadow-md transition-all group">
+                <div className="bg-blue-100 p-1.5 rounded text-blue-600 group-hover:bg-blue-50 transition-colors"><FileText size={16} /></div>
+                <button onClick={() => handleDownloadDocument(doc)} className="font-medium text-slate-700 group-hover:text-blue-700 text-left flex-1 truncate">
+                  {doc?.name || doc}
+                </button>
+                <button onClick={() => handleDownloadDocument(doc)} className="text-slate-400 hover:text-blue-600 ml-2 p-1 rounded">
+                  <ArrowDownToLine size={16} />
+                </button>
+                <button onClick={() => handleRemoveVehicleDocument(i)} className="text-slate-400 hover:text-red-600 ml-1 p-1 rounded">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+            {sale.clientDocuments?.map((doc, i) => (
+              <div key={'c'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm hover:border-indigo-400 hover:shadow-md transition-all group">
+                <div className="bg-indigo-100 p-1.5 rounded text-indigo-600 group-hover:bg-indigo-50 transition-colors"><IdCard size={16} /></div>
+                <button onClick={() => handleDownloadDocument(doc)} className="font-medium text-slate-700 group-hover:text-indigo-700 text-left flex-1 truncate">
+                  {doc?.name || doc}
+                </button>
+                <button onClick={() => handleDownloadDocument(doc)} className="text-slate-400 hover:text-indigo-600 ml-2 p-1 rounded">
+                  <ArrowDownToLine size={16} />
+                </button>
+                <button onClick={() => handleRemoveClientDocument(i)} className="text-slate-400 hover:text-red-600 ml-1 p-1 rounded">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+            {(vehicle.documents?.length || 0) + (sale.clientDocuments?.length || 0) === 0 && (
+              <div className="w-full text-sm text-slate-500 italic bg-white border border-dashed border-slate-300 rounded-lg px-4 py-3">
+                Ainda não há documentos anexados. Use os botões acima para adicionar novos arquivos após a venda.
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* PROGRESS BAR */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -1780,11 +1884,11 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
           </div>
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex items-center justify-between">
-              <div><span className="block text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Total Já Recebido</span><div className="text-2xl font-bold text-emerald-600">R$ {totalPaid.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
+              <div><span className="block text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Total Já Recebido</span><div className="text-xl sm:text-2xl font-bold text-emerald-600 whitespace-nowrap">R$ {totalPaid.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div></div>
               <CheckCircle size={32} className="text-emerald-100 hidden sm:block"/>
             </div>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex items-center justify-between">
-              <div><span className="block text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Saldo Devedor Restante</span><div className="text-2xl font-bold text-orange-600">R$ {remainingValue > 0 ? remainingValue.toLocaleString('pt-BR', {minimumFractionDigits:2}) : '0,00'}</div></div>
+              <div><span className="block text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Saldo Devedor Restante</span><div className="text-xl sm:text-2xl font-bold text-orange-600 whitespace-nowrap">R$ {remainingValue > 0 ? remainingValue.toLocaleString('pt-BR', {minimumFractionDigits:2}) : '0,00'}</div></div>
               <AlertCircle size={32} className="text-orange-100 hidden sm:block"/>
             </div>
           </div>
@@ -1799,7 +1903,7 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
                 <tr className="text-slate-500 text-xs uppercase tracking-wider">
                   <th className="p-4 font-bold border-b border-slate-200 w-12">Nº</th>
                   <th className="p-4 font-bold border-b border-slate-200">Vencimento</th>
-                  <th className="p-4 font-bold border-b border-slate-200">Valor (R$)</th>
+                  <th className="p-4 font-bold border-b border-slate-200 whitespace-nowrap">Valor (R$)</th>
                   <th className="p-4 font-bold border-b border-slate-200 w-48">Status</th>
                   <th className="p-4 font-bold border-b border-slate-200">Observações</th>
                 </tr>
@@ -1809,7 +1913,7 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
                   <tr key={inst.id} className="hover:bg-blue-50/30 transition-colors">
                     <td className="p-4 text-slate-500 font-bold">{inst.number}</td>
                     <td className="p-4 text-slate-700 font-medium">{new Date(inst.dueDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
-                    <td className="p-4 font-bold text-slate-800">R$ {(inst.value || 0).toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                    <td className="p-4 font-bold text-slate-800 whitespace-nowrap">R$ {(inst.value || 0).toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
                     <td className="p-4">
                       <div className="relative">
                         <select 
