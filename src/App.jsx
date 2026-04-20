@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
@@ -352,6 +352,8 @@ export default function App() {
   const [confirmAction, setConfirmAction] = useState({ isOpen: false, message: '', onConfirm: null });
   const [alertMessage, setAlertMessage] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [documentPreview, setDocumentPreview] = useState({ isOpen: false, title: '', html: '' });
+  const documentFrameRef = useRef(null);
 
   // Modals State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -360,6 +362,7 @@ export default function App() {
   const [isManualCommissionOpen, setIsManualCommissionOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [selectedSaleId, setSelectedSaleId] = useState(null);
+  const [sellPrefillClient, setSellPrefillClient] = useState(null);
 
   // Auth & Data Fetching (Voltou ao Firebase!)
   useEffect(() => {
@@ -451,13 +454,16 @@ export default function App() {
   };
 
   const handlePrint = (htmlContent) => {
-    const printWindow = window.open('', '_blank');
-    if(printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-    } else {
-      setAlertMessage("Por favor, permita a abertura de pop-ups no seu navegador para gerar e baixar o PDF.");
-    }
+    setDocumentPreview({
+      isOpen: true,
+      title: 'Visualização de Documento',
+      html: htmlContent
+    });
+  };
+
+  const handlePrintFromPreview = () => {
+    const frameWindow = documentFrameRef.current?.contentWindow;
+    if (frameWindow) frameWindow.print();
   };
 
   const handleToggleCommission = async (id, currentStatus) => {
@@ -528,9 +534,12 @@ export default function App() {
   };
 
   const handleSellVehicle = async (saleData) => {
-    if (!checkConnection() || !selectedVehicle) return;
+    if (!checkConnection()) return;
     try {
-      const vehicleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles', selectedVehicle.id);
+      const vehicleToSell = vehicles.find(v => v.id === saleData.vehicleId) || selectedVehicle;
+      if (!vehicleToSell) return;
+
+      const vehicleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles', vehicleToSell.id);
       await updateDoc(vehicleRef, { status: 'vendido' });
 
       const installmentsList = generateInstallments(
@@ -541,20 +550,20 @@ export default function App() {
 
       const salesRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'sales');
       await addDoc(salesRef, {
-        vehicleId: selectedVehicle.id,
+        vehicleId: vehicleToSell.id,
         ...saleData,
         installmentsList,
         paymentStatus: 'em-dia',
         created_at: new Date().toISOString()
       });
 
-      const commissionValue = selectedVehicle.type === 'carro' ? 200 : 100;
+      const commissionValue = vehicleToSell.type === 'carro' ? 200 : 100;
       const commissionsRef = collection(db, 'artifacts', appId, 'users', 'loja_global', 'commissions');
       await addDoc(commissionsRef, {
-        vehicleType: selectedVehicle.type,
+        vehicleType: vehicleToSell.type,
         clientName: saleData.clientName,
-        vehicleModel: selectedVehicle.model,
-        plate: selectedVehicle.plate,
+        vehicleModel: vehicleToSell.model,
+        plate: vehicleToSell.plate,
         saleDate: saleData.saleDate,
         value: commissionValue,
         status: 'pendente',
@@ -619,6 +628,31 @@ export default function App() {
     );
     const saleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'sales', saleId);
     await updateDoc(saleRef, { installmentsList: updatedInstallments });
+  };
+
+  const handleUpdateSaleDetails = async (saleId, updates) => {
+    if (!checkConnection()) return;
+    const saleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'sales', saleId);
+    await updateDoc(saleRef, updates);
+    setAlertMessage("✅ Dados do cliente atualizados com sucesso.");
+  };
+
+  const handleUpdateVehicleDetails = async (vehicleId, updates) => {
+    if (!checkConnection()) return;
+    const vehicleRef = doc(db, 'artifacts', appId, 'users', 'loja_global', 'vehicles', vehicleId);
+    await updateDoc(vehicleRef, updates);
+    setAlertMessage("✅ Dados do veículo atualizados com sucesso.");
+  };
+
+  const handleQuickSaleFromClient = (client) => {
+    const stockVehicles = vehicles.filter(v => v.status === 'a-venda');
+    if (stockVehicles.length === 0) {
+      setAlertMessage("⚠️ Não há veículos disponíveis no estoque para iniciar a venda.");
+      return;
+    }
+    setSelectedVehicle(stockVehicles[0]);
+    setSellPrefillClient(client);
+    setIsSellModalOpen(true);
   };
 
   // --- GLOBAL FILTERING ---
@@ -784,11 +818,9 @@ export default function App() {
             sales={sales} 
             searchQuery={searchQuery} 
             activeFilter={activeFilter} 
-            onViewVehicle={(v) => { setSelectedVehicle(v); setIsViewModalOpen(true); }}
             onDeleteVehicle={handleDeleteVehicle}
             onDeleteSale={handleDeleteSale}
             onPrint={handlePrint}
-            onShowAlert={setAlertMessage}
           />
         )}
 
@@ -820,10 +852,10 @@ export default function App() {
           />
         )}
         
-        {activeTab === 'clients' && <ClientsView sales={sales} searchQuery={searchQuery} onShowAlert={setAlertMessage} />}
+        {activeTab === 'clients' && <ClientsView sales={sales} searchQuery={searchQuery} onShowAlert={setAlertMessage} onQuickSell={handleQuickSaleFromClient} />}
         {activeTab === 'finance' && <FinanceView sales={sales.filter(s => s.paymentStatus !== 'quitado')} />}
         {activeTab === 'commissions' && <CommissionsView commissions={commissions} onToggleStatus={handleToggleCommission} onDelete={handleDeleteCommission} />}
-        {activeTab === 'archive' && <ArchiveView sales={filteredSales} vehicles={vehicles} onSaleClick={(sale) => setSelectedSaleId(sale.id)} onDeleteSale={handleDeleteSale} />}
+        {activeTab === 'archive' && <ArchiveView sales={filteredSales} vehicles={vehicles} onSaleClick={(saleId) => setSelectedSaleId(saleId)} onDeleteSale={handleDeleteSale} />}
 
       </main>
 
@@ -844,8 +876,11 @@ export default function App() {
       {selectedVehicle && (
         <SellVehicleModal
           isOpen={isSellModalOpen}
-          onClose={() => setIsSellModalOpen(false)}
+          onClose={() => { setIsSellModalOpen(false); setSellPrefillClient(null); }}
           vehicle={selectedVehicle}
+          clients={sales}
+          availableVehicles={vehicles.filter(v => v.status === 'a-venda')}
+          initialClient={sellPrefillClient}
           onConfirm={handleSellVehicle}
         />
       )}
@@ -857,12 +892,38 @@ export default function App() {
           sale={sales.find(s => s.id === selectedSaleId)}
           vehicle={vehicles.find(v => v.id === sales.find(s => s.id === selectedSaleId)?.vehicleId) || {}}
           onUpdateInstallment={handleUpdateInstallment}
+          onUpdateSale={handleUpdateSaleDetails}
+          onUpdateVehicle={handleUpdateVehicleDetails}
           onPrint={handlePrint}
-          onShowAlert={setAlertMessage}
         />
       )}
 
       <ManualCommissionModal isOpen={isManualCommissionOpen} onClose={() => setIsManualCommissionOpen(false)} onSave={handleAddManualCommission} />
+
+      <Modal
+        isOpen={documentPreview.isOpen}
+        onClose={() => setDocumentPreview({ isOpen: false, title: '', html: '' })}
+        title={documentPreview.title}
+        maxWidth="max-w-6xl"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">Use os botões abaixo para imprimir e depois voltar para o app sem fechar a tela.</p>
+          <div className="flex items-center justify-end gap-3">
+            <button onClick={handlePrintFromPreview} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              Imprimir / Salvar PDF
+            </button>
+            <button onClick={() => setDocumentPreview({ isOpen: false, title: '', html: '' })} className="px-4 py-2 border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+              Voltar para o Sistema
+            </button>
+          </div>
+          <iframe
+            ref={documentFrameRef}
+            title="Documento"
+            srcDoc={documentPreview.html}
+            className="w-full h-[70vh] rounded-xl border border-slate-200"
+          />
+        </div>
+      </Modal>
 
     </div>
   );
@@ -1164,8 +1225,9 @@ const ViewVehicleModal = ({ isOpen, onClose, vehicle, onEdit, onSell, onDelete }
   );
 };
 
-const SellVehicleModal = ({ isOpen, onClose, vehicle, onConfirm }) => {
+const SellVehicleModal = ({ isOpen, onClose, vehicle, onConfirm, clients = [], availableVehicles = [], initialClient = null }) => {
   const [sellData, setSellData] = useState({
+    vehicleId: vehicle?.id || '',
     clientName: '', clientPhone: '', clientCpf: '', clientRg: '', 
     clientBirthDate: '', clientMaritalStatus: 'SOLTEIRO', clientProfession: '',
     clientStreet: '', clientNumber: '', clientNeighborhood: '', clientCity: '', clientState: '',
@@ -1174,6 +1236,46 @@ const SellVehicleModal = ({ isOpen, onClose, vehicle, onConfirm }) => {
     saleValue: vehicle?.price || '', financedAmount: '', downPayment: '',
     installments: '', installmentValue: '', firstInstallmentDate: '', saleObservations: ''
   });
+  const [selectedClientCpf, setSelectedClientCpf] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSellData(prev => ({
+      ...prev,
+      vehicleId: vehicle?.id || prev.vehicleId || '',
+      saleValue: vehicle?.price || prev.saleValue || ''
+    }));
+    setSelectedClientCpf('');
+  }, [isOpen, vehicle]);
+
+  useEffect(() => {
+    if (!isOpen || !initialClient) return;
+    setSelectedClientCpf(initialClient.clientCpf || '');
+    setSellData(prev => ({
+      ...prev,
+      clientName: initialClient.clientName || '',
+      clientPhone: initialClient.clientPhone || '',
+      clientCpf: initialClient.clientCpf || '',
+      clientRg: initialClient.clientRg || '',
+      clientBirthDate: initialClient.clientBirthDate || '',
+      clientMaritalStatus: initialClient.clientMaritalStatus || 'SOLTEIRO',
+      clientProfession: initialClient.clientProfession || '',
+      clientStreet: initialClient.clientStreet || '',
+      clientNumber: initialClient.clientNumber || '',
+      clientNeighborhood: initialClient.clientNeighborhood || '',
+      clientCity: initialClient.clientCity || '',
+      clientState: initialClient.clientState || '',
+      clientDocuments: initialClient.documents || initialClient.clientDocuments || []
+    }));
+  }, [isOpen, initialClient]);
+
+  const uniqueClients = Array.from(
+    clients.reduce((map, sale) => {
+      if (!sale.clientCpf) return map;
+      if (!map.has(sale.clientCpf)) map.set(sale.clientCpf, sale);
+      return map;
+    }, new Map()).values()
+  );
 
   const handleChange = (e) => {
     let { name, value } = e.target;
@@ -1232,6 +1334,38 @@ const handleClientFileUpload = async (e) => {
     onConfirm(sellData);
   };
 
+  const handleClientSelection = (cpf) => {
+    setSelectedClientCpf(cpf);
+    if (!cpf) return;
+    const chosenClient = uniqueClients.find(client => client.clientCpf === cpf);
+    if (!chosenClient) return;
+    setSellData(prev => ({
+      ...prev,
+      clientName: chosenClient.clientName || '',
+      clientPhone: chosenClient.clientPhone || '',
+      clientCpf: chosenClient.clientCpf || '',
+      clientRg: chosenClient.clientRg || '',
+      clientBirthDate: chosenClient.clientBirthDate || '',
+      clientMaritalStatus: chosenClient.clientMaritalStatus || 'SOLTEIRO',
+      clientProfession: chosenClient.clientProfession || '',
+      clientStreet: chosenClient.clientStreet || '',
+      clientNumber: chosenClient.clientNumber || '',
+      clientNeighborhood: chosenClient.clientNeighborhood || '',
+      clientCity: chosenClient.clientCity || '',
+      clientState: chosenClient.clientState || '',
+      clientDocuments: chosenClient.clientDocuments || []
+    }));
+  };
+
+  const handleVehicleSelection = (vehicleId) => {
+    const chosenVehicle = availableVehicles.find(v => v.id === vehicleId);
+    setSellData(prev => ({
+      ...prev,
+      vehicleId,
+      saleValue: chosenVehicle?.price || prev.saleValue
+    }));
+  };
+
   if (!vehicle) return null;
 
   return (
@@ -1245,6 +1379,22 @@ const handleClientFileUpload = async (e) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-4">
             <h4 className="font-bold text-slate-800 border-b pb-2 flex items-center gap-2"><IdCard size={18}/> Qualificação do Comprador</h4>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Cliente já cadastrado</label>
+              <select
+                value={selectedClientCpf}
+                onChange={(e) => handleClientSelection(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-blue-500 text-sm bg-white"
+              >
+                <option value="">Selecionar cliente existente (opcional)</option>
+                {uniqueClients.map(client => (
+                  <option key={client.clientCpf} value={client.clientCpf}>
+                    {client.clientName} - {client.clientCpf}
+                  </option>
+                ))}
+              </select>
+            </div>
             
             <Input label="Nome Completo" name="clientName" value={sellData.clientName} onChange={handleChange} required />
             
@@ -1305,6 +1455,21 @@ const handleClientFileUpload = async (e) => {
 
           <div className="space-y-4">
             <h4 className="font-bold text-slate-800 border-b pb-2 flex items-center gap-2"><Wallet size={18}/> Condições de Pagamento</h4>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Veículo já cadastrado</label>
+              <select
+                value={sellData.vehicleId}
+                onChange={(e) => handleVehicleSelection(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-blue-500 text-sm bg-white"
+                required
+              >
+                {availableVehicles.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.brand} {v.model} - {v.plate} ({v.year})
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <Input label="Data da Venda" name="saleDate" type="date" value={sellData.saleDate} onChange={handleChange} required />
               <Input label="Valor Total (R$)" name="saleValue" type="text" value={sellData.saleValue} onChange={handleChange} required placeholder="0,00" />
@@ -1374,19 +1539,68 @@ const ManualCommissionModal = ({ isOpen, onClose, onSave }) => {
   );
 };
 
-const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallment, onPrint, onShowAlert }) => {
-  if (!sale) return null;
-
-  const totalValue = parseMoney(sale.saleValue || '0');
-  const downPayment = parseMoney(sale.downPayment || '0');
-  const installments = sale.installmentsList || [];
+const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallment, onUpdateSale, onUpdateVehicle, onPrint }) => {
+  const totalValue = parseMoney(sale?.saleValue || '0');
+  const downPayment = parseMoney(sale?.downPayment || '0');
+  const installments = sale?.installmentsList || [];
   const paidCount = installments.filter(i => i.status === 'pago').length;
   const progressPercent = installments.length > 0 ? (paidCount / installments.length) * 100 : 100;
   const totalPaid = downPayment + installments.filter(i => i.status === 'pago').reduce((acc, i) => acc + (i.value || 0), 0);
   const remainingValue = totalValue - totalPaid;
 
-  const handleStatusChange = (instId, newStatus) => { onUpdateInstallment(sale.id, instId, { status: newStatus }); };
-  const handleObsChange = (instId, text) => { onUpdateInstallment(sale.id, instId, { observation: text }); };
+  const handleStatusChange = (instId, newStatus) => {
+    if (!sale?.id) return;
+    onUpdateInstallment(sale.id, instId, { status: newStatus });
+  };
+  const handleObsChange = (instId, text) => {
+    if (!sale?.id) return;
+    onUpdateInstallment(sale.id, instId, { observation: text });
+  };
+  const [isEditingClient, setIsEditingClient] = useState(false);
+  const [isEditingVehicle, setIsEditingVehicle] = useState(false);
+  const [clientData, setClientData] = useState({});
+  const [vehicleData, setVehicleData] = useState({});
+
+  useEffect(() => {
+    if (!sale) return;
+    setClientData({
+      clientName: sale.clientName || '',
+      clientCpf: sale.clientCpf || '',
+      clientPhone: sale.clientPhone || '',
+      clientRg: sale.clientRg || '',
+      clientMaritalStatus: sale.clientMaritalStatus || '',
+      clientStreet: sale.clientStreet || '',
+      clientNumber: sale.clientNumber || '',
+      clientNeighborhood: sale.clientNeighborhood || '',
+      clientCity: sale.clientCity || '',
+      clientState: sale.clientState || ''
+    });
+    setVehicleData({
+      brand: vehicle.brand || '',
+      model: vehicle.model || '',
+      year: vehicle.year || '',
+      plate: vehicle.plate || '',
+      color: vehicle.color || '',
+      renavam: vehicle.renavam || '',
+      chassis: vehicle.chassis || ''
+    });
+    setIsEditingClient(false);
+    setIsEditingVehicle(false);
+  }, [sale, vehicle]);
+
+  const saveClientDetails = async () => {
+    if (!sale?.id) return;
+    await onUpdateSale(sale.id, clientData);
+    setIsEditingClient(false);
+  };
+
+  const saveVehicleDetails = async () => {
+    if (!vehicle?.id) return;
+    await onUpdateVehicle(vehicle.id, vehicleData);
+    setIsEditingVehicle(false);
+  };
+
+  if (!sale) return null;
 
   const getStatusColor = (status) => {
     if (status === 'pago') return 'bg-green-100 text-green-800 border-green-300';
@@ -1407,6 +1621,12 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
             <p className="text-slate-500 text-sm mt-2">Registado a {new Date(sale.saleDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
           </div>
           <div className="flex flex-wrap gap-2 w-full md:w-auto mt-2 md:mt-0">
+            <button onClick={() => setIsEditingClient(prev => !prev)} className="flex-1 md:flex-none justify-center bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap">
+              <Users size={16} className="shrink-0"/> {isEditingClient ? 'Cancelar Edição Cliente' : 'Editar Cliente'}
+            </button>
+            <button onClick={() => setIsEditingVehicle(prev => !prev)} className="flex-1 md:flex-none justify-center bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-700 px-3 py-2 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap">
+              <Car size={16} className="shrink-0"/> {isEditingVehicle ? 'Cancelar Edição Veículo' : 'Editar Veículo'}
+            </button>
             <button onClick={() => onPrint(getContractHTML(sale, vehicle))} className="flex-1 md:flex-none justify-center bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap">
               <FileText size={16} className="text-blue-600 shrink-0"/> Contrato
             </button>
@@ -1424,31 +1644,44 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm">
             <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-4 border-b border-slate-200 pb-2"><Users size={18} className="text-blue-500"/> Dados do Cliente</h4>
             <div className="space-y-3 text-sm">
-              <div><span className="block text-xs text-slate-500 font-semibold uppercase">Nome</span><span className="font-medium text-slate-800">{sale.clientName}</span></div>
+              <div><span className="block text-xs text-slate-500 font-semibold uppercase">Nome</span>{isEditingClient ? <input value={clientData.clientName || ''} onChange={(e) => setClientData({...clientData, clientName: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{sale.clientName}</span>}</div>
               <div className="grid grid-cols-2 gap-2">
-                <div><span className="block text-xs text-slate-500 font-semibold uppercase">CPF</span><span className="font-medium text-slate-800 font-mono">{sale.clientCpf}</span></div>
-                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Telefone</span><span className="font-medium text-slate-800">{sale.clientPhone}</span></div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">CPF</span>{isEditingClient ? <input value={clientData.clientCpf || ''} onChange={(e) => setClientData({...clientData, clientCpf: formatCPF(e.target.value)})} className="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono" /> : <span className="font-medium text-slate-800 font-mono">{sale.clientCpf}</span>}</div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Telefone</span>{isEditingClient ? <input value={clientData.clientPhone || ''} onChange={(e) => setClientData({...clientData, clientPhone: formatPhone(e.target.value)})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{sale.clientPhone}</span>}</div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Identidade (RG)</span><span className="font-medium text-slate-800">{sale.clientRg || 'N/D'}</span></div>
-                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Estado Civil</span><span className="font-medium text-slate-800">{sale.clientMaritalStatus || 'N/D'}</span></div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Identidade (RG)</span>{isEditingClient ? <input value={clientData.clientRg || ''} onChange={(e) => setClientData({...clientData, clientRg: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{sale.clientRg || 'N/D'}</span>}</div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Estado Civil</span>{isEditingClient ? <input value={clientData.clientMaritalStatus || ''} onChange={(e) => setClientData({...clientData, clientMaritalStatus: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{sale.clientMaritalStatus || 'N/D'}</span>}</div>
               </div>
-              <div><span className="block text-xs text-slate-500 font-semibold uppercase">Endereço</span><span className="font-medium text-slate-800">{sale.clientStreet ? `${sale.clientStreet}, nº ${sale.clientNumber} - ${sale.clientNeighborhood}, ${sale.clientCity}-${sale.clientState}` : sale.clientAddress || 'Não informado'}</span></div>
+              <div>
+                <span className="block text-xs text-slate-500 font-semibold uppercase">Endereço</span>
+                {isEditingClient ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <input value={clientData.clientStreet || ''} onChange={(e) => setClientData({...clientData, clientStreet: e.target.value})} placeholder="Rua" className="col-span-2 w-full border border-slate-300 rounded-lg p-2 text-sm" />
+                    <input value={clientData.clientNumber || ''} onChange={(e) => setClientData({...clientData, clientNumber: e.target.value})} placeholder="Número" className="w-full border border-slate-300 rounded-lg p-2 text-sm" />
+                    <input value={clientData.clientNeighborhood || ''} onChange={(e) => setClientData({...clientData, clientNeighborhood: e.target.value})} placeholder="Bairro" className="w-full border border-slate-300 rounded-lg p-2 text-sm" />
+                    <input value={clientData.clientCity || ''} onChange={(e) => setClientData({...clientData, clientCity: e.target.value})} placeholder="Cidade" className="w-full border border-slate-300 rounded-lg p-2 text-sm" />
+                    <input value={clientData.clientState || ''} onChange={(e) => setClientData({...clientData, clientState: e.target.value.toUpperCase()})} placeholder="UF" maxLength={2} className="w-full border border-slate-300 rounded-lg p-2 text-sm" />
+                  </div>
+                ) : <span className="font-medium text-slate-800">{sale.clientStreet ? `${sale.clientStreet}, nº ${sale.clientNumber} - ${sale.clientNeighborhood}, ${sale.clientCity}-${sale.clientState}` : sale.clientAddress || 'Não informado'}</span>}
+              </div>
+              {isEditingClient && <button onClick={saveClientDetails} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors">Salvar dados do cliente</button>}
             </div>
           </div>
 
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm">
             <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-4 border-b border-slate-200 pb-2"><Car size={18} className="text-orange-500"/> Detalhes do Veículo</h4>
             <div className="space-y-3 text-sm">
-              <div><span className="block text-xs text-slate-500 font-semibold uppercase">Veículo</span><span className="font-bold text-slate-800 text-base">{vehicle.brand} {vehicle.model}</span></div>
+              <div><span className="block text-xs text-slate-500 font-semibold uppercase">Veículo</span>{isEditingVehicle ? <div className="grid grid-cols-2 gap-2"><input value={vehicleData.brand || ''} onChange={(e) => setVehicleData({...vehicleData, brand: e.target.value})} placeholder="Marca" className="w-full border border-slate-300 rounded-lg p-2 text-sm" /><input value={vehicleData.model || ''} onChange={(e) => setVehicleData({...vehicleData, model: e.target.value})} placeholder="Modelo" className="w-full border border-slate-300 rounded-lg p-2 text-sm" /></div> : <span className="font-bold text-slate-800 text-base">{vehicle.brand} {vehicle.model}</span>}</div>
               <div className="grid grid-cols-2 gap-2">
-                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Placa / Ano</span><span className="font-medium text-slate-800 font-mono bg-white px-1 border rounded">{vehicle.plate}</span> <span className="text-slate-600">({vehicle.year})</span></div>
-                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Cor</span><span className="font-medium text-slate-800">{vehicle.color || '---'}</span></div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Placa / Ano</span>{isEditingVehicle ? <div className="flex gap-2"><input value={vehicleData.plate || ''} onChange={(e) => setVehicleData({...vehicleData, plate: e.target.value})} placeholder="Placa" className="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono" /><input value={vehicleData.year || ''} onChange={(e) => setVehicleData({...vehicleData, year: e.target.value})} placeholder="Ano" className="w-full border border-slate-300 rounded-lg p-2 text-sm" /></div> : <><span className="font-medium text-slate-800 font-mono bg-white px-1 border rounded">{vehicle.plate}</span> <span className="text-slate-600">({vehicle.year})</span></>}</div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Cor</span>{isEditingVehicle ? <input value={vehicleData.color || ''} onChange={(e) => setVehicleData({...vehicleData, color: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{vehicle.color || '---'}</span>}</div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Renavam</span><span className="font-medium text-slate-800">{vehicle.renavam || '---'}</span></div>
-                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Chassi</span><span className="font-medium text-slate-800 truncate block">{vehicle.chassis || '---'}</span></div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Renavam</span>{isEditingVehicle ? <input value={vehicleData.renavam || ''} onChange={(e) => setVehicleData({...vehicleData, renavam: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800">{vehicle.renavam || '---'}</span>}</div>
+                <div><span className="block text-xs text-slate-500 font-semibold uppercase">Chassi</span>{isEditingVehicle ? <input value={vehicleData.chassis || ''} onChange={(e) => setVehicleData({...vehicleData, chassis: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm" /> : <span className="font-medium text-slate-800 truncate block">{vehicle.chassis || '---'}</span>}</div>
               </div>
+              {isEditingVehicle && <button onClick={saveVehicleDetails} className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors">Salvar dados do veículo</button>}
             </div>
           </div>
 
@@ -1469,7 +1702,7 @@ const PaymentTrackingModal = ({ isOpen, onClose, sale, vehicle, onUpdateInstallm
              <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-3"><FolderArchive size={18} className="text-blue-600"/> Documentos Anexados (Veículo e Cliente)</h4>
              <div className="flex flex-wrap gap-3">
                {vehicle.documents?.map((doc, i) => (
-                 <div key={'v'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group" onClick={() => onShowAlert('A iniciar o download do documento do veículo: ' + doc)}>
+                 <div key={'v'+i} className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group" onClick={() => handleDownloadDocument(doc)}>
                    <div className="bg-blue-100 p-1.5 rounded text-blue-600 group-hover:bg-blue-50 transition-colors"><FileText size={16} /></div>
                    <span className="font-medium text-slate-700 group-hover:text-blue-700">{doc?.name || doc}</span>
                    <ArrowDownToLine size={16} className="text-slate-400 group-hover:text-blue-600 ml-2" />
@@ -1626,7 +1859,7 @@ const SaleCard = ({ sale, vehicle, onDragStart, onClick, onDelete, borderHover =
   </div>
 );
 
-const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onViewVehicle, onDeleteVehicle, onDeleteSale, onPrint, onShowAlert }) => {
+const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onDeleteVehicle, onDeleteSale, onPrint }) => {
   const searchLower = searchQuery.toLowerCase();
   
   const allItems = [];
@@ -1673,11 +1906,29 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onViewVe
           <div className="font-mono text-sm text-slate-500 mb-4">{v.plate} • {v.year}</div>
           <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-4">
             <span className="font-bold text-blue-600">R$ {parseMoney(v.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <button onClick={(e) => { e.stopPropagation(); onDeleteVehicle(v.id); }} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 size={16} /></button>
-              <button onClick={() => onViewVehicle(v)} className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition-colors">Abrir Cadastro</button>
             </div>
           </div>
+          {v?.documents?.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <span className="text-xs font-bold text-slate-500 mb-2 block uppercase">Documentos do Veículo</span>
+              <div className="space-y-2">
+                {v.documents.map((doc, i) => (
+                  <button
+                    key={`sv-${i}`}
+                    onClick={() => handleDownloadDocument(doc)}
+                    className="w-full text-left bg-blue-50 border border-blue-100 hover:bg-blue-100 text-blue-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between gap-2"
+                  >
+                    <span className="truncate">{doc?.name || doc}</span>
+                    <span className="shrink-0 flex items-center gap-1">
+                      <ArrowDownToLine size={15} /> Baixar
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       );
     } else {
@@ -1707,6 +1958,9 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onViewVe
           <div className="flex flex-col gap-1 text-sm text-slate-700 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
             <span className="font-bold flex items-center gap-1.5"><Users size={14} className="text-slate-400" /> {s.clientName}</span>
             <span className="text-xs text-slate-500 pl-5">{s.clientPhone}</span>
+            <span className="text-xs text-slate-500 pl-5">
+              {s.clientStreet ? `${s.clientStreet}, nº ${s.clientNumber || 'S/N'} - ${s.clientNeighborhood || ''}, ${s.clientCity || ''}-${s.clientState || ''}` : 'Endereço não informado'}
+            </span>
           </div>
 
           <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-3 gap-2">
@@ -1718,14 +1972,15 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onViewVe
           {(s.clientDocuments?.length > 0 || v?.documents?.length > 0) && (
             <div className="mt-4 pt-3 border-t border-slate-100">
               <span className="text-xs font-bold text-slate-500 mb-2 block">Documentos Anexados</span>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 {v?.documents?.map((doc, i) => (
                   <button
                     key={'v' + i}
                     onClick={() => handleDownloadDocument(doc)}
-                    className="text-xs text-left text-blue-600 hover:underline flex items-center gap-1"
+                    className="w-full text-left bg-blue-50 border border-blue-100 hover:bg-blue-100 text-blue-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between gap-2"
                   >
-                    <ArrowDownToLine size={12} /> {doc.name || doc}
+                    <span className="truncate">{doc?.name || doc}</span>
+                    <span className="shrink-0 flex items-center gap-1"><ArrowDownToLine size={15} /> Baixar</span>
                   </button>
                 ))}
 
@@ -1733,9 +1988,10 @@ const GlobalSearchView = ({ vehicles, sales, searchQuery, activeFilter, onViewVe
                   <button
                     key={'c' + i}
                     onClick={() => handleDownloadDocument(doc)}
-                    className="text-xs text-left text-indigo-600 hover:underline flex items-center gap-1"
+                    className="w-full text-left bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 px-3 py-3.5 md:py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between gap-2"
                   >
-                    <ArrowDownToLine size={12} /> {doc.name || doc}
+                    <span className="truncate">{doc?.name || doc}</span>
+                    <span className="shrink-0 flex items-center gap-1"><ArrowDownToLine size={15} /> Baixar</span>
                   </button>
                 ))}
               </div>
@@ -1813,7 +2069,7 @@ const DashboardView = ({ vehicles, sales, clients }) => {
   );
 };
 
-const ClientsView = ({ sales, searchQuery, onShowAlert }) => {
+const ClientsView = ({ sales, searchQuery, onShowAlert, onQuickSell }) => {
   const searchLower = searchQuery ? searchQuery.toLowerCase() : '';
   
   const clientsMap = new Map();
@@ -1868,14 +2124,30 @@ const ClientsView = ({ sales, searchQuery, onShowAlert }) => {
                   <span className="block text-xs text-slate-500 font-bold uppercase mb-2 flex items-center gap-1"><FolderArchive size={14}/> Documentos Pessoais</span>
                   <div className="space-y-2">
                     {client.documents.map((doc, i) => (
-                      <div key={i} className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-200">
-                        <span className="text-xs font-medium text-slate-600 truncate max-w-[200px]">{doc?.name || doc}</span>
-                        <button onClick={() => handleDownloadDocument(doc)} className="text-blue-600 hover:bg-blue-100 p-1 rounded" title="Baixar Documento"><ArrowDownToLine size={14}/></button>
-                      </div>
+                      <button
+                        key={i}
+                        onClick={() => handleDownloadDocument(doc)}
+                        className="w-full text-left bg-slate-50 border border-slate-200 hover:bg-slate-100 px-3 py-3.5 md:py-2.5 rounded-lg transition-colors flex items-center justify-between gap-2"
+                        title="Baixar Documento"
+                      >
+                        <span className="text-sm font-semibold text-slate-700 truncate">{doc?.name || doc}</span>
+                        <span className="text-blue-600 shrink-0 flex items-center gap-1 text-sm font-bold">
+                          <ArrowDownToLine size={15}/> Baixar
+                        </span>
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
+
+              <div className="pt-4 border-t border-slate-100">
+                <button
+                  onClick={() => onQuickSell(client)}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  <DollarSign size={16}/> Vender para este cliente
+                </button>
+              </div>
             </div>
           </div>
         ))}
